@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.withType
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     java
     id("org.springframework.boot") version "3.5.5"
@@ -62,15 +65,45 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+val snippetsDir = file("build/generated-snippets")
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
 
 tasks.test {
-    outputs.dir(project.extra["snippetsDir"]!!)
+    outputs.dir(snippetsDir)
 }
 
-tasks.asciidoctor {
-    inputs.dir(project.extra["snippetsDir"]!!)
-    dependsOn(tasks.test)
+tasks.withType<BootJar> {
+    dependsOn("copyApiDocs")
+    from(file("${layout.buildDirectory.get()}/assets")) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        into("BOOT-INF/classes")
+    }
+    archiveFileName.set("parent-caring-service-api.jar")
+}
+
+// OpenAPI3 스펙 생성을 위한 설정
+openapi3 {
+    setServer("http://localhost:8080/")
+    title = "Parent Caring Service API Documentation"
+    description = "Parent Caring Service API Documentation"
+    version = "1.0.0"
+    format = "yaml" // JSON도 가능
+}
+
+// 생성된 OpenAPI 3.0 문서를 build/assets/static/swagger 에 복사
+tasks.register<Copy>("injectOpenApiSpecToSwagger") {
+    dependsOn("openapi3")
+    from("${layout.projectDirectory}/swagger-ui")
+    into(file("${layout.buildDirectory.get()}/assets/static/swagger"))
+
+    from(file("${layout.buildDirectory.get()}/api-spec/openapi3.yaml"))
+    into(file("${layout.buildDirectory.get()}/assets/static/swagger"))
+}
+
+// 생성된 OpenAPI 3.0 문서를 build/assets/static/swagger 에 복사
+tasks.register<Copy>("copyApiDocs") {
+    dependsOn("injectOpenApiSpecToSwagger")
 }
