@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ParentCaringService
+  datasource:
+    url: jdbc:postgresql://localhost:15432/parentcaringservice
+    username: user
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 16379
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+      show-sql: false
+  docker:
+    compose:
+      lifecycle-management: start_only
