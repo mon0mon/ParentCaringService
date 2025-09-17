@@ -18,3 +18,9 @@ spring:
   docker:
     compose:
       lifecycle-management: start_only
+
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

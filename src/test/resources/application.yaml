@@ -13,3 +13,9 @@ spring:
     hibernate:
       ddl-auto: update
       show-sql: false
+
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
