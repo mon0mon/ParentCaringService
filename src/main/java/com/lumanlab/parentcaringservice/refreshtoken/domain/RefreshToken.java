@@ -69,7 +69,7 @@ public class RefreshToken {
 
     /**
      * 현재 RefreshToken의 상태를 반환하는 메서드
-     *
+     * <p>
      * RefreshToken이 취소되었거나 현재 시간을 기준으로 만료되었는지 여부를 확인 후,
      * 상태를 반환하는 로직을 포함
      *
@@ -88,15 +88,18 @@ public class RefreshToken {
     }
 
     /**
-     * 기존 RefreshToken을 기반으로 새로운 RefreshToken을 생성하고,
-     * 새로운 RefreshToken에 이전 RefreshToken 참조를 설정
+     * 주어진 정보를 기반으로 기존 RefreshToken을 새롭게 갱신하는 메서드
+     * 새로운 RefreshToken 객체를 생성하며, 기존 토큰은 무효화 상태로 변경됨
      *
-     * @param tokenHash 새로운 RefreshToken의 해쉬
-     * @param issuedAt 새로운 RefreshToken의 발급 시간
-     * @param expiredAt 새로운 RefreshToken의 만료 시간
-     * @return 생성된 새로운 RefreshToken
+     * @param tokenHash 새롭게 생성될 토큰의 해시값
+     * @param issuedAt  새 토큰의 발급 시간
+     * @param expiredAt 새 토큰의 만료 시간
+     * @param ip        새 토큰 생성 요청을 발행한 사용자 IP
+     * @param userAgent 새 토큰 생성 요청을 발행한 사용자 에이전트 정보
+     * @return 갱신된 RefreshToken 객체
      */
-    public RefreshToken rotate(String tokenHash, OffsetDateTime issuedAt, OffsetDateTime expiredAt) {
+    public RefreshToken rotate(String tokenHash, OffsetDateTime issuedAt, OffsetDateTime expiredAt, String ip,
+                               String userAgent) {
         var renewedToken = new RefreshToken(user, tokenHash, ip, userAgent, issuedAt, expiredAt);
 
         renewedToken.rotatedFrom = this;
@@ -108,7 +111,7 @@ public class RefreshToken {
 
     /**
      * RefreshToken을 취소(무효화)하는 메서드
-     *
+     * <p>
      * 이 메서드는 RefreshToken의 `revokedAt` 필드를 현재 시간으로 설정하여
      * 해당 RefreshToken이 더 이상 유효하지 않음을 나타냄
      * 단, 이미 취소된 상태(`revokedAt`이 null이 아님)인 경우 예외를 발생시킴
@@ -125,10 +128,10 @@ public class RefreshToken {
 
     /**
      * RefreshToken 데이터의 유효성을 검증하는 메서드
-     *
+     * <p>
      * 이 메서드는 RefreshToken에 포함된 필수 데이터(user, tokenHash, issuedAt, expiredAt)의
      * 유효성을 확인하고, 데이터가 null 또는 유효하지 않을 경우 예외를 던짐
-     *
+     * <p>
      * 검증 내용:
      * - user 필드가 null인지 확인
      * - tokenHash 필드가 null 또는 비어 있는지 확인

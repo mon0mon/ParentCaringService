@@ -119,7 +119,8 @@ class RefreshTokenTest {
         final OffsetDateTime issuedAt = OffsetDateTime.now();
         final OffsetDateTime expiredAt = issuedAt.plusDays(1);
 
-        var renewedToken = refreshToken.rotate(NEW_TOKEN, issuedAt, expiredAt);
+        var renewedToken = refreshToken.rotate(NEW_TOKEN, issuedAt, expiredAt, refreshToken.getIp(),
+                refreshToken.getUserAgent());
 
         assertThat(refreshToken.getStatus()).isEqualTo(RefreshTokenStatus.EXPIRED);
 

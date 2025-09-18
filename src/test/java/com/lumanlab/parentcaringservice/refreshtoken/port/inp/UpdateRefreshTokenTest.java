@@ -93,7 +93,7 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
         OffsetDateTime issuedAt = OffsetDateTime.now();
         OffsetDateTime expiredAt = issuedAt.plusDays(1);
 
-        updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, issuedAt, expiredAt);
+        updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, IP, USER_AGENT, issuedAt, expiredAt);
 
         var actual = refreshTokenRepository.findByUser(user);
         var actualActiveToken = actual.stream()
@@ -128,9 +128,8 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
         OffsetDateTime issuedAt = OffsetDateTime.now();
         OffsetDateTime expiredAt = issuedAt.plusDays(1);
 
-        assertThatThrownBy(
-                () -> updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, issuedAt, expiredAt)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, IP, USER_AGENT, issuedAt,
+                expiredAt)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -106,6 +106,20 @@ public class JwtTokenService {
     }
 
     /**
+     * /**
+     * JWT에서 subject를 추출하는 함수
+     *
+     * @param jwtToken JWT 토큰 문자열
+     * @return 추출된 subject 값
+     * @throws JwtException JWT 토큰이 유효하지 않거나 subject를 추출할 수 없는 경우
+     */
+    public String extractSubject(String jwtToken) {
+        Claims claims = validateJwtToken(jwtToken);
+
+        return claims.getSubject();
+    }
+
+    /**
      * 주어진 JWT 토큰의 헤더에서 JWK(Key ID, kid)를 추출
      *
      * @param jwtToken JWK 키 ID를 추출할 대상 JWT 토큰 문자열

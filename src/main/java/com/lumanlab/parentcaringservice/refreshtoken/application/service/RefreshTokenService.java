@@ -66,15 +66,16 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     }
 
     @Override
-    public RefreshToken generate(Long userId, String tokenHash, String ip, String userAgent, OffsetDateTime issuedAt,
-                                 OffsetDateTime expiredAt) {
+    public void generate(Long userId, String tokenHash, String ip, String userAgent, OffsetDateTime issuedAt,
+                         OffsetDateTime expiredAt) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        return refreshTokenRepository.save(new RefreshToken(user, tokenHash, ip, userAgent, issuedAt, expiredAt));
+        refreshTokenRepository.save(new RefreshToken(user, tokenHash, ip, userAgent, issuedAt, expiredAt));
     }
 
     @Override
-    public void rotate(Long userId, String oldToken, String renewedTokenHash, OffsetDateTime issuedAt,
+    public void rotate(Long userId, String oldToken, String renewedTokenHash, String ip, String userAgent,
+                       OffsetDateTime issuedAt,
                        OffsetDateTime expiredAt) {
         RefreshToken refreshToken = findByUserAndToken(userId, oldToken);
 
@@ -82,7 +83,8 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
             throw new NoSuchElementException("Refresh token is not found.");
         }
 
-        refreshTokenRepository.save(refreshToken.rotate(renewedTokenHash, issuedAt, expiredAt));
+        refreshTokenRepository.save(refreshToken.rotate(renewedTokenHash, issuedAt, expiredAt, refreshToken.getIp(),
+                refreshToken.getUserAgent()));
     }
 
     @Override
