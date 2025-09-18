@@ -3,6 +3,7 @@ package com.lumanlab.parentcaringservice.security;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenDto;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvider;
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
+import com.lumanlab.parentcaringservice.security.jwt.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 public class DefaultRefreshTokenProvider implements RefreshTokenProvider {
 
     private final RefreshTokenEncoder refreshTokenEncoder;
+    private final JwtProperties jwtProperties;
 
     /**
      * 리프레시 토큰을 생성하는 메서드
@@ -21,10 +23,9 @@ public class DefaultRefreshTokenProvider implements RefreshTokenProvider {
      * @return RefreshTokenDto 객체로, 생성된 토큰, 발급 시점, 만료 시점을 포함함
      */
     public RefreshTokenDto generateRefreshToken() {
-        // TODO 추후에 issuedAt, expiredAt은 properties에서 기간을 주입받는 것으로 변경할 것
         String token = UUID.randomUUID().toString();
         OffsetDateTime issuedAt = OffsetDateTime.now();
-        OffsetDateTime expiredAt = issuedAt.plusDays(1);
+        OffsetDateTime expiredAt = issuedAt.plusSeconds(jwtProperties.getRefreshToken().getExpirationTime());
 
         return new RefreshTokenDto(generateHashedToken(token), issuedAt, expiredAt);
     }

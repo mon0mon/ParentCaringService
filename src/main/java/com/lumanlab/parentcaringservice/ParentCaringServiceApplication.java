@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaAuditing
+@EnableScheduling
 @EnableConfigurationProperties({JwtProperties.class})
 public class ParentCaringServiceApplication {
 
