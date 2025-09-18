@@ -17,6 +17,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,6 +99,22 @@ public class JwkManager {
         return jwkRepository.findMetadata();
     }
 
+    /**
+     * 키가 그레이스 기간 내에 있는지 확인
+     */
+    public boolean isKeyInGracePeriod(String keyId) {
+        JwkData keyData = jwkRepository.findKeyData(keyId);
+        if (keyData == null) {
+            return false;
+        }
+
+        Instant now = Instant.now();
+        Instant rotationTime = keyData.getCreatedAt().plus(jwtProperties.getKey().getRotationIntervalDuration());
+        Instant gracePeriodEnd = rotationTime.plus(jwtProperties.getKey().getGracePeriodDuration());
+
+        return now.isAfter(rotationTime) && now.isBefore(gracePeriodEnd);
+    }
+
     private void initializeKeys() {
         String storedKeyId = jwkRepository.findCurrentKeyId();
 
@@ -146,7 +163,9 @@ public class JwkManager {
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
         Instant now = Instant.now();
-        Instant expiresAt = now.plus(jwtProperties.getKey().getRotationIntervalDuration().multipliedBy(2));
+        // 그레이스 기간을 포함한 만료 시간 계산
+        Instant expiresAt = now.plus(jwtProperties.getKey().getRotationIntervalDuration())
+                .plus(jwtProperties.getKey().getGracePeriodDuration());
 
         JwkData keyData = JwkData.builder()
                 .keyId(keyId)
@@ -159,7 +178,12 @@ public class JwkManager {
                 .active(true)
                 .build();
 
-        jwkRepository.saveKeyData(keyData, jwtProperties.getKey().getRotationIntervalDuration().multipliedBy(2));
+        // Redis TTL도 그레이스 기간을 포함하여 설정
+        Duration redisTtl = jwtProperties.getKey()
+                .getRotationIntervalDuration()
+                .plus(jwtProperties.getKey().getGracePeriodDuration());
+
+        jwkRepository.saveKeyData(keyData, redisTtl);
     }
 
     private KeyPair loadKeyFromRedis(String keyId) {
@@ -233,33 +257,68 @@ public class JwkManager {
 
     private void cleanupOldKeys() {
         JwkMetadata metadata = jwkRepository.findMetadata();
+        Instant now = Instant.now();
 
+        // 그레이스 기간이 지난 키들만 정리
+        Set<String> keysToRemove = new HashSet<>();
+
+        for (Map.Entry<String, KeyPair> entry : keyCache.entrySet()) {
+            String keyId = entry.getKey();
+
+            // 현재 키는 제외
+            if (keyId.equals(currentKeyId)) {
+                continue;
+            }
+
+            JwkData keyData = jwkRepository.findKeyData(keyId);
+            if (keyData != null) {
+                // 그레이스 기간까지 고려한 만료 시간 확인
+                Instant keyExpirationWithGrace = keyData.getCreatedAt()
+                        .plus(jwtProperties.getKey().getRotationIntervalDuration())
+                        .plus(jwtProperties.getKey().getGracePeriodDuration());
+
+                if (now.isAfter(keyExpirationWithGrace)) {
+                    keysToRemove.add(keyId);
+                }
+            }
+        }
+
+        // 최대 키 개수 초과 시 추가 정리 (그레이스 기간 고려)
         if (keyCache.size() > jwtProperties.getKey().getMaxKeys()) {
-            Set<String> keysToRemove = new HashSet<>();
-
-            // 가장 오래된 키들 식별 (현재 키는 제외)
             keyCache.entrySet()
                     .stream()
                     .filter(entry -> !entry.getKey().equals(currentKeyId))
+                    .filter(entry -> {
+                        JwkData keyData = jwkRepository.findKeyData(entry.getKey());
+                        if (keyData == null) return true;
+
+                        Instant gracePeriodEnd = keyData.getCreatedAt()
+                                .plus(jwtProperties.getKey().getRotationIntervalDuration())
+                                .plus(jwtProperties.getKey().getGracePeriodDuration());
+
+                        return now.isAfter(gracePeriodEnd);
+                    })
                     .sorted((e1, e2) -> {
                         JwkData data1 = jwkRepository.findKeyData(e1.getKey());
                         JwkData data2 = jwkRepository.findKeyData(e2.getKey());
                         if (data1 == null || data2 == null) return 0;
                         return data1.getCreatedAt().compareTo(data2.getCreatedAt());
                     })
-                    .limit(keyCache.size() - jwtProperties.getKey().getMaxKeys())
+                    .limit(Math.max(0, keyCache.size() - jwtProperties.getKey().getMaxKeys()))
                     .forEach(entry -> keysToRemove.add(entry.getKey()));
+        }
 
-            // 키 제거
-            for (String keyId : keysToRemove) {
-                keyCache.remove(keyId);
-                jwkRepository.deleteKeyData(keyId);
-                log.info("오래된 키 제거: {}", keyId);
-            }
+        // 키 제거 실행
+        for (String keyId : keysToRemove) {
+            keyCache.remove(keyId);
+            jwkRepository.deleteKeyData(keyId);
+            log.info("그레이스 기간이 지난 키 제거: {}", keyId);
         }
 
         // 만료된 키들 정리
         jwkRepository.cleanupExpiredKeys();
+
+        log.info("키 정리 완료 - 제거된 키: {}, 활성 키: {}", keysToRemove.size(), keyCache.size());
     }
 
     private void updateMetadata() {

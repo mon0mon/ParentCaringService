@@ -46,6 +46,7 @@ public class JwtProperties {
     public static class Key {
         private long rotationInterval; // 초 단위
         private int maxKeys;
+        private long gracePeriod; // 그레이스 기간 (초 단위)
 
         public Duration getRotationIntervalDuration() {
             return Duration.ofSeconds(rotationInterval);
@@ -53,6 +54,14 @@ public class JwtProperties {
 
         public long getRotationIntervalMillis() {
             return rotationInterval * 1000;
+        }
+
+        public Duration getGracePeriodDuration() {
+            return Duration.ofSeconds(gracePeriod);
+        }
+
+        public long getGracePeriodMillis() {
+            return gracePeriod * 1000;
         }
     }
 }

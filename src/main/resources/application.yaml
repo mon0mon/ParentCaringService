@@ -27,6 +27,7 @@ jwt:
   key:
     rotation-interval: 86400  # 24시간마다 키 로테이션 (초)
     max-keys: 5  # 최대 보관할 키 개수
+    grace-period: 3600  # 키 그레이스 기간 (1시간, 초)
   issuer: parent-caring-service
 
 #logging:
