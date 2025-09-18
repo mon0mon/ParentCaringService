@@ -1,0 +1,31 @@
+### 유저 프로필 조회
+GET {{host}}/api/users/profile
+Authorization: {{jwtToken}}
+
+### 유저 로그인
+POST {{host}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "{{user.email}}",
+  "password": "{{user.password}}"
+}
+
+> {%
+    if (response.body && response.body != "") {
+        client.log("accessToken : " + response.body.accessToken);
+        client.log("refreshToken : " + response.body.refreshToken);
+        client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+        client.global.set("accessToken", response.body.accessToken);
+        client.global.set("refreshToken", response.body.refreshToken);
+    }
+%}
+
+### 유저 회원가입
+POST {{host}}/api/users/register
+Content-Type: application/json
+
+{
+  "email": "{{user.email}}",
+  "password": "{{user.password}}"
+}

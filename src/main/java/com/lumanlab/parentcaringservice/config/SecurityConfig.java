@@ -30,9 +30,12 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        // 공개 엔드포인트 설정
+                        // Swagger 문서
                         .requestMatchers("/swagger-ui/**").permitAll()
+                        // JWK 키 조회
                         .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
+                        // UserAPI
+                        .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/login").permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 );
