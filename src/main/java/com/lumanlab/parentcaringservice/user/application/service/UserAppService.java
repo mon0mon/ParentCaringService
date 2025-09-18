@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -44,7 +43,7 @@ public class UserAppService {
         }
 
         // 액세스 토큰 발급
-        String accessToken = jwtTokenService.generateAccessToken(user.getId(), Map.of());
+        String accessToken = jwtTokenService.generateAccessToken(user.getId(), null);
 
         // 리프레시 토큰 발급 및 저장 로직
         RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken();

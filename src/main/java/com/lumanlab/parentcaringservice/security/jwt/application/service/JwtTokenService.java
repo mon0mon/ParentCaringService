@@ -45,13 +45,15 @@ public class JwtTokenService {
         String jwkKeyId = jwkManager.getCurrentKeyId();
         PrivateKey jwkPrivateKey = jwkManager.getCurrentKeyPair().getPrivate();
 
+        Map claimsMap = claims == null ? Map.of() : claims;
+
         return Jwts.builder()
                 .setHeader(Map.of("alg", "RS256", "typ", "JWT", "kid", jwkKeyId))
                 .issuer(jwtProperties.getIssuer())
                 .subject(String.valueOf(userId))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .claims(claims)
+                .claims(claimsMap)
                 .signWith(jwkPrivateKey, SignatureAlgorithm.RS256)
                 .compact();
     }
