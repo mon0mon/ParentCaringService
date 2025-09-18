@@ -27,7 +27,7 @@ public class DefaultRefreshTokenProvider implements RefreshTokenProvider {
         OffsetDateTime issuedAt = OffsetDateTime.now();
         OffsetDateTime expiredAt = issuedAt.plusSeconds(jwtProperties.getRefreshToken().getExpirationTime());
 
-        return new RefreshTokenDto(generateHashedToken(token), issuedAt, expiredAt);
+        return new RefreshTokenDto(token, generateHashedToken(token), issuedAt, expiredAt);
     }
 
     /**

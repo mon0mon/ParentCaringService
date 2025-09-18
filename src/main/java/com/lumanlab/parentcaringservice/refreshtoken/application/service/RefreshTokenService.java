@@ -4,8 +4,6 @@ import com.lumanlab.parentcaringservice.refreshtoken.domain.RefreshToken;
 import com.lumanlab.parentcaringservice.refreshtoken.domain.RefreshTokenStatus;
 import com.lumanlab.parentcaringservice.refreshtoken.port.inp.QueryRefreshToken;
 import com.lumanlab.parentcaringservice.refreshtoken.port.inp.UpdateRefreshToken;
-import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenDto;
-import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvider;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepository;
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
 import com.lumanlab.parentcaringservice.user.domain.User;
@@ -25,7 +23,6 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
-    private final RefreshTokenProvider refreshTokenProvider;
     private final RefreshTokenEncoder refreshTokenEncoder;
 
     @Override
@@ -69,26 +66,23 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     }
 
     @Override
-    public void generate(Long userId, String ip, String userAgent) {
+    public RefreshToken generate(Long userId, String tokenHash, String ip, String userAgent, OffsetDateTime issuedAt,
+                                 OffsetDateTime expiredAt) {
         User user = userRepository.findById(userId).orElseThrow();
-        RefreshTokenDto dto = refreshTokenProvider.generateRefreshToken();
 
-        refreshTokenRepository.save(
-                new RefreshToken(user, dto.tokenHash(), ip, userAgent, dto.issuedAt(), dto.expiredAt())
-        );
+        return refreshTokenRepository.save(new RefreshToken(user, tokenHash, ip, userAgent, issuedAt, expiredAt));
     }
 
     @Override
-    public void rotate(Long userId, String token) {
-        RefreshToken refreshToken = findByUserAndToken(userId, token);
+    public void rotate(Long userId, String oldToken, String renewedTokenHash, OffsetDateTime issuedAt,
+                       OffsetDateTime expiredAt) {
+        RefreshToken refreshToken = findByUserAndToken(userId, oldToken);
 
         if (refreshToken == null) {
             throw new NoSuchElementException("Refresh token is not found.");
         }
 
-        RefreshTokenDto dto = refreshTokenProvider.generateRefreshToken();
-
-        refreshTokenRepository.save(refreshToken.rotate(dto.tokenHash(), dto.issuedAt(), dto.expiredAt()));
+        refreshTokenRepository.save(refreshToken.rotate(renewedTokenHash, issuedAt, expiredAt));
     }
 
     @Override

@@ -24,26 +24,21 @@ import static org.mockito.Mockito.*;
 
 class UpdateRefreshTokenTest extends BaseUsecaseTest {
 
-    @Autowired
-    UpdateRefreshToken updateRefreshToken;
-
-    @Autowired
-    RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @MockitoSpyBean
-    RefreshTokenEncoder refreshTokenEncoder;
-
-    User user;
-    RefreshToken refreshToken;
-
     final String EMAIL = "john.doe@example.com";
     final String PASSWORD = "PASSWORD";
-    final String TOKEN = "TOKEN_HASH";
+    final String TOKEN = "TOKEN";
     final String IP = "127.0.0.1";
     final String USER_AGENT = "Chrome/80.0.3987.132";
+    @Autowired
+    UpdateRefreshToken updateRefreshToken;
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    UserRepository userRepository;
+    @MockitoSpyBean
+    RefreshTokenEncoder refreshTokenEncoder;
+    User user;
+    RefreshToken refreshToken;
 
     @BeforeEach
     void setUp() {
@@ -57,17 +52,18 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
     @Test
     @DisplayName("리프레시 토큰 - 생성")
     void generateRefreshToken() {
-        final String ENCODED_TOKEN = "ENCODED_TOKEN_HASH";
+        final String TOKEN_HASH = "TOKEN_HASH";
 
         // 이 테스트에서만 Mock 동작 설정
-        doReturn(ENCODED_TOKEN).when(refreshTokenEncoder).encode(any(String.class));
-        doReturn(true).when(refreshTokenEncoder).matches(eq(TOKEN), eq(ENCODED_TOKEN));
+        doReturn(TOKEN_HASH).when(refreshTokenEncoder).encode(any(String.class));
+        doReturn(true).when(refreshTokenEncoder).matches(eq(TOKEN), eq(TOKEN_HASH));
         doReturn(false).when(refreshTokenEncoder).matches(argThat(token -> !TOKEN.equals(token)), any(String.class));
 
         refreshTokenRepository.deleteAll();
         refreshTokenRepository.flush();
 
-        updateRefreshToken.generate(user.getId(), IP, USER_AGENT);
+        updateRefreshToken.generate(user.getId(), TOKEN_HASH, IP, USER_AGENT, OffsetDateTime.now(),
+                OffsetDateTime.now().plusDays(1));
 
         RefreshToken actual = refreshTokenRepository.findByUser(user).stream().findFirst().orElse(null);
 
@@ -86,25 +82,28 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
     void generateRefreshTokenThrowException() {
         var nonExistId = Long.MAX_VALUE;
 
-        assertThatThrownBy(() -> updateRefreshToken.generate(nonExistId, IP, USER_AGENT))
-                .isInstanceOf(NoSuchElementException.class);
+        assertThatThrownBy(() -> updateRefreshToken.generate(nonExistId, TOKEN, IP, USER_AGENT, OffsetDateTime.now(),
+                OffsetDateTime.now().plusDays(1))).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
     @DisplayName("리프레시 토큰 - 회전")
     void rotateRefreshToken() {
-        updateRefreshToken.rotate(user.getId(), TOKEN);
+        String tokenHash = refreshTokenEncoder.encode(TOKEN);
+        OffsetDateTime issuedAt = OffsetDateTime.now();
+        OffsetDateTime expiredAt = issuedAt.plusDays(1);
+
+        updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, issuedAt, expiredAt);
 
         var actual = refreshTokenRepository.findByUser(user);
         var actualActiveToken = actual.stream()
                 .filter(token -> token.getStatus() == RefreshTokenStatus.ACTIVE)
                 .findFirst()
                 .orElse(null);
-        var actualExpiredTokens =
-                actual.stream()
-                        .filter(token -> token.getStatus() == RefreshTokenStatus.EXPIRED)
-                        .findFirst()
-                        .orElse(null);
+        var actualExpiredTokens = actual.stream()
+                .filter(token -> token.getStatus() == RefreshTokenStatus.EXPIRED)
+                .findFirst()
+                .orElse(null);
 
         assertThat(refreshToken.getStatus()).isEqualTo(RefreshTokenStatus.EXPIRED);
         assertThat(refreshToken.getRevokedAt()).isNotNull();
@@ -125,8 +124,13 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
         refreshTokenRepository.deleteAll();
         refreshTokenRepository.flush();
 
-        assertThatThrownBy(() -> updateRefreshToken.rotate(user.getId(), TOKEN))
-                .isInstanceOf(IllegalArgumentException.class);
+        String tokenHash = refreshTokenEncoder.encode(TOKEN);
+        OffsetDateTime issuedAt = OffsetDateTime.now();
+        OffsetDateTime expiredAt = issuedAt.plusDays(1);
+
+        assertThatThrownBy(
+                () -> updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, issuedAt, expiredAt)).isInstanceOf(
+                IllegalArgumentException.class);
     }
 
     @Test
@@ -135,11 +139,10 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
         updateRefreshToken.revoke(user.getId(), TOKEN);
 
         var actual = refreshTokenRepository.findByUser(user);
-        var actualExpiredToken =
-                actual.stream()
-                        .filter(token -> token.getStatus() == RefreshTokenStatus.EXPIRED)
-                        .findFirst()
-                        .orElse(null);
+        var actualExpiredToken = actual.stream()
+                .filter(token -> token.getStatus() == RefreshTokenStatus.EXPIRED)
+                .findFirst()
+                .orElse(null);
 
         assertThat(refreshToken.getStatus()).isEqualTo(RefreshTokenStatus.EXPIRED);
         assertThat(refreshToken.getRevokedAt()).isNotNull();
