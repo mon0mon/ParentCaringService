@@ -26,11 +26,17 @@ public class TestAuthHelper {
     JwtTokenService jwtTokenService;
 
     /**
+     * 테스트용 사용자 생성
+     */
+    public User createUser(String email, String password, UserRole... roles) {
+        return userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles)));
+    }
+
+    /**
      * 테스트용 사용자 생성 및 JWT 토큰 반환
      */
     public String createUserAndGetToken(String email, String password, UserRole... roles) {
-        User user = new User(email, passwordEncoder.encode(password), Set.of(roles));
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles)));
 
         return jwtTokenService.generateAccessToken(savedUser.getId(), null);
     }

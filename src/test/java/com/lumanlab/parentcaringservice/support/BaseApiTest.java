@@ -1,5 +1,6 @@
 package com.lumanlab.parentcaringservice.support;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public abstract class BaseApiTest {
 
     @Autowired
     protected TestAuthHelper authHelper;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     @Autowired
     private FilterChainProxy springSecurityFilterChain;
