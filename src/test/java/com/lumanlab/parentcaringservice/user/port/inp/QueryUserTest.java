@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.NoSuchElementException;
+import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class QueryUserTest extends BaseUsecaseTest {
 
@@ -28,7 +30,7 @@ class QueryUserTest extends BaseUsecaseTest {
 
     @BeforeEach
     void setUp() {
-        user = userRepository.save(new User(EMAIL, PASSWORD, UserRole.PARENT));
+        user = userRepository.save(new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT)));
     }
 
     @Test

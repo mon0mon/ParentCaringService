@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +48,7 @@ class QueryRefreshTokenTest extends BaseUsecaseTest {
 
     @BeforeEach
     void setUp() {
-        user = userRepository.save(new User(EMAIL, PASSWORD, UserRole.PARENT));
+        user = userRepository.save(new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT)));
 
         // 활성 상태 리프레시 토큰
         refreshToken = refreshTokenRepository.save(
@@ -95,7 +96,7 @@ class QueryRefreshTokenTest extends BaseUsecaseTest {
     @Test
     @DisplayName("리프레시 토큰 - 유저로 조회 - 리프레시 토큰을 발급하지 않은 유저로 조회 NULL")
     void queryRefreshTokenByUserThrowException() {
-        var user2 = userRepository.save(new User("email", "PASSWORD", UserRole.PARENT));
+        var user2 = userRepository.save(new User("email", "PASSWORD", Set.of(UserRole.PARENT)));
 
         var actual = queryRefreshToken.findByUser(user2.getId());
 

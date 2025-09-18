@@ -11,6 +11,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /** 사용자 **/
 @Entity(name = "users")
@@ -38,11 +41,11 @@ public class User {
     @ColumnDefault("'ACTIVE'")
     private UserStatus status = UserStatus.ACTIVE;
 
-    /** 유저 역할 **/
-    // TODO 추후에 1:N일 경우 @ElementCollection으로 변경할 것
+    /** 유저 역할 목록 **/
+    @ElementCollection(fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private UserRole role;
+    private Set<UserRole> roles;
 
     /** 다단계 인증 여부 **/
     @Column(nullable = false)
@@ -57,20 +60,13 @@ public class User {
     @LastModifiedDate
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
-    public User(String email, String password, UserRole role) {
+    public User(String email, String password, Collection<UserRole> roles) {
+        // 사용자 정보가 유효한 값인지 확인
+        validateUserData(email, password, roles);
+
         this.email = email;
         this.password = password;
-        this.role = role;
-
-        // MASTER 유저 역할인 경우에만 필수적으로 다단계 인증 활성화
-        if (role == UserRole.MASTER) {
-            this.mfaEnabled = true;
-        } else {
-            this.mfaEnabled = false;
-        }
-
-        // 사용자 정보가 유효한 값인지 확인
-        validateUserData();
+        this.roles = new HashSet<>(roles);
     }
 
     /**
@@ -120,18 +116,14 @@ public class User {
     }
 
     /**
-     * 사용자 데이터의 유효성을 검사
+     * 사용자 데이터를 검증.
      *
-     * 유효하지 않은 값이 포함된 경우 IllegalArgumentException을 발생
-     *
-     * 검사 조건:
-     * - 이메일(email)이 비어있거나 공백일 경우 예외 발생.
-     * - 비밀번호(password)가 비어있거나 공백일 경우 예외 발생.
-     * - 사용자 역할(role)이 null일 경우 예외 발생.
-     *
-     * @throws IllegalArgumentException 이메일, 비밀번호가 유효하지 않거나, 역할이 null인 경우
+     * @param email    사용자 이메일. Null이거나 공백일 경우 예외 발생
+     * @param password 사용자 비밀번호. Null이거나 공백일 경우 예외 발생
+     * @param roles    사용자 역할 목록. Null이거나 비어있을 경우 예외 발생
+     * @throws IllegalArgumentException 이메일 또는 비밀번호가 Null이거나 공백이거나, 역할 목록이 Null이거나 비어있는 경우
      */
-    private void validateUserData() {
+    private void validateUserData(String email, String password, Collection<UserRole> roles) {
         if (!StringUtils.hasText(email)) {
             throw new IllegalArgumentException("Email must not be blank");
         }
@@ -140,8 +132,8 @@ public class User {
             throw new IllegalArgumentException("Password must not be blank");
         }
 
-        if (role == null) {
-            throw new IllegalArgumentException("User role must not be null");
+        if (roles == null || roles.isEmpty()) {
+            throw new IllegalArgumentException("User role must not be null or empty");
         }
     }
 }

@@ -5,13 +5,15 @@ import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.domain.UserStatus;
 import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UpdateUserTest extends BaseUsecaseTest {
 
@@ -28,7 +30,7 @@ class UpdateUserTest extends BaseUsecaseTest {
 
     @BeforeEach
     void setUp() {
-        user = userRepository.save(new User(EMAIL, PASSWORD, UserRole.PARENT));
+        user = userRepository.save(new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT)));
     }
 
     @Test
@@ -37,14 +39,14 @@ class UpdateUserTest extends BaseUsecaseTest {
         final String NEW_EMAIL = "foo.bar@example.com";
         final String NEW_PASSWORD = "NEW_PASSWORD";
 
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, UserRole.PARENT);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
-        assertThat(user.getRole()).isEqualTo(UserRole.PARENT);
+        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.PARENT);
         assertThat(user.getMfaEnabled()).isFalse();
     }
 
@@ -54,14 +56,14 @@ class UpdateUserTest extends BaseUsecaseTest {
         final String NEW_EMAIL = "foo.bar@example.com";
         final String NEW_PASSWORD = "NEW_PASSWORD";
 
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, UserRole.ADMIN);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.ADMIN));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
-        assertThat(user.getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.ADMIN);
         assertThat(user.getMfaEnabled()).isFalse();
     }
 
@@ -71,15 +73,14 @@ class UpdateUserTest extends BaseUsecaseTest {
         final String NEW_EMAIL = "foo.bar@example.com";
         final String NEW_PASSWORD = "NEW_PASSWORD";
 
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, UserRole.MASTER);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.MASTER));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
-        assertThat(user.getRole()).isEqualTo(UserRole.MASTER);
-        assertThat(user.getMfaEnabled()).isTrue();
+        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.MASTER);
     }
 
     @Test

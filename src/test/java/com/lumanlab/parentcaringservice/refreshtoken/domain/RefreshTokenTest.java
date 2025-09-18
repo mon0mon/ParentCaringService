@@ -7,8 +7,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RefreshTokenTest {
 
@@ -23,7 +25,7 @@ class RefreshTokenTest {
 
     @BeforeEach
     void setUp() {
-        user = new User(EMAIL, PASSWORD, UserRole.PARENT);
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT));
 
         refreshToken =
                 new RefreshToken(user, TOKEN, IP, USER_AGENT, OffsetDateTime.now(), OffsetDateTime.now().plusDays(1));
@@ -94,7 +96,8 @@ class RefreshTokenTest {
     @DisplayName("리프레시 토큰 - 상태 조회 - 토큰 유효시간이 만료된 경우 - EXPIRED")
     void getRefreshTokenStatusExpired1() {
         refreshToken =
-                new RefreshToken(user, TOKEN, IP, USER_AGENT, OffsetDateTime.now().minusDays(1), OffsetDateTime.now().minusSeconds(1));
+                new RefreshToken(user, TOKEN, IP, USER_AGENT, OffsetDateTime.now().minusDays(1),
+                        OffsetDateTime.now().minusSeconds(1));
 
         assertThat(refreshToken.getStatus()).isEqualTo(RefreshTokenStatus.EXPIRED);
     }

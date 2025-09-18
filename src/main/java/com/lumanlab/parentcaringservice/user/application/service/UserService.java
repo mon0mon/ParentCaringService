@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -27,8 +29,8 @@ public class UserService implements QueryUser, UpdateUser {
     }
 
     @Override
-    public void register(String email, String password, UserRole role) {
-        var user = new User(email, password, role);
+    public void register(String email, String password, Collection<UserRole> roles) {
+        var user = new User(email, password, roles);
 
         userRepository.save(user);
     }

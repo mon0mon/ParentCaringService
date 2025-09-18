@@ -2,7 +2,6 @@ package com.lumanlab.parentcaringservice.refreshtoken.port.inp;
 
 import com.lumanlab.parentcaringservice.refreshtoken.domain.RefreshToken;
 import com.lumanlab.parentcaringservice.refreshtoken.domain.RefreshTokenStatus;
-import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvider;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepository;
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
 import com.lumanlab.parentcaringservice.support.BaseUsecaseTest;
@@ -17,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +47,7 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
 
     @BeforeEach
     void setUp() {
-        user = userRepository.save(new User(EMAIL, PASSWORD, UserRole.PARENT));
+        user = userRepository.save(new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT)));
 
         refreshToken = refreshTokenRepository.save(
                 new RefreshToken(user, refreshTokenEncoder.encode(TOKEN), IP, USER_AGENT, OffsetDateTime.now(),
