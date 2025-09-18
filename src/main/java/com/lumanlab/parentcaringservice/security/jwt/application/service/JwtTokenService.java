@@ -38,7 +38,7 @@ public class JwtTokenService {
      * @param claims JWT 토큰의 클레임 정보. 토큰에 포함될 추가 데이터
      * @return 생성된 JWT 액세스 토큰 문자열
      */
-    public String generateAccessToken(String userId, Map<String, Object> claims) {
+    public String generateAccessToken(Long userId, Map<String, Object> claims) {
         Instant now = Instant.now();
         Instant expiration = now.plus(jwtProperties.getAccessToken().getExpirationDuration());
 
@@ -48,7 +48,7 @@ public class JwtTokenService {
         return Jwts.builder()
                 .setHeader(Map.of("alg", "RS256", "typ", "JWT", "kid", jwkKeyId))
                 .issuer(jwtProperties.getIssuer())
-                .subject(userId)
+                .subject(String.valueOf(userId))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .claims(claims)
