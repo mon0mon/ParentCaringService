@@ -32,30 +32,31 @@ public class JwtTokenService {
     private final ObjectMapper objectMapper;
 
     /**
-     * 주어진 사용자 ID와 클레임 정보를 기반으로 액세스 토큰을 생성
+     * JWT 액세스 토큰을 생성하는 메서드
      *
-     * @param userId 액세스 토큰을 생성할 사용자 ID
-     * @param claims JWT 토큰의 클레임 정보. 토큰에 포함될 추가 데이터
+     * @param userId JWT 토큰에 포함될 사용자 ID
+     * @param claims 추가적으로 토큰에 포함될 클레임 정보. null일 경우 빈 데이터로 처리됨
      * @return 생성된 JWT 액세스 토큰 문자열
      */
     public String generateAccessToken(Long userId, Map<String, Object> claims) {
         Instant now = Instant.now();
         Instant expiration = now.plus(jwtProperties.getAccessToken().getExpirationDuration());
 
-        String jwkKeyId = jwkManager.getCurrentKeyId();
-        PrivateKey jwkPrivateKey = jwkManager.getCurrentKeyPair().getPrivate();
+        return generateJwtToken(userId, claims, now, expiration);
+    }
 
-        Map claimsMap = claims == null ? Map.of() : claims;
+    /**
+     * 사용자 ID와 클레임 정보를 기반으로 JWT 리프레시 토큰을 생성하는 메서드
+     *
+     * @param userId JWT 토큰에 포함될 사용자 ID
+     * @param claims 추가적으로 토큰에 포함될 클레임 정보. null일 경우 빈 데이터로 처리됨
+     * @return 생성된 JWT 리프레시 토큰 문자열
+     */
+    public String generateRefreshToken(Long userId, Map<String, Object> claims) {
+        Instant now = Instant.now();
+        Instant expiration = now.plus(jwtProperties.getRefreshToken().getExpirationDuration());
 
-        return Jwts.builder()
-                .setHeader(Map.of("alg", "RS256", "typ", "JWT", "kid", jwkKeyId))
-                .issuer(jwtProperties.getIssuer())
-                .subject(String.valueOf(userId))
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .claims(claimsMap)
-                .signWith(jwkPrivateKey, SignatureAlgorithm.RS256)
-                .compact();
+        return generateJwtToken(userId, claims, now, expiration);
     }
 
     /**
@@ -127,5 +128,31 @@ public class JwtTokenService {
             log.debug("JWT 토큰에서 JWK 키 ID 추출 중 오류 발생", e);
             return null;
         }
+    }
+
+    /**
+     * JWT 토큰을 생성하는 메서드
+     *
+     * @param userId     JWT 토큰에 포함될 사용자 ID
+     * @param claims     추가적으로 토큰에 포함될 클레임 정보. null일 경우 빈 데이터로 처리됨
+     * @param now        토큰의 발급 시간 (issuedAt으로 설정)
+     * @param expiration 토큰의 만료 시간 (expiration으로 설정)
+     * @return 생성된 JWT 토큰 문자열
+     */
+    private String generateJwtToken(Long userId, Map<String, Object> claims, Instant now, Instant expiration) {
+        String jwkKeyId = jwkManager.getCurrentKeyId();
+        PrivateKey jwkPrivateKey = jwkManager.getCurrentKeyPair().getPrivate();
+
+        Map claimsMap = claims == null ? Map.of() : claims;
+
+        return Jwts.builder()
+                .setHeader(Map.of("alg", "RS256", "typ", "JWT", "kid", jwkKeyId))
+                .issuer(jwtProperties.getIssuer())
+                .subject(String.valueOf(userId))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .claims(claimsMap)
+                .signWith(jwkPrivateKey, SignatureAlgorithm.RS256)
+                .compact();
     }
 }

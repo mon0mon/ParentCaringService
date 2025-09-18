@@ -46,7 +46,7 @@ public class UserAppService {
         String accessToken = jwtTokenService.generateAccessToken(user.getId(), null);
 
         // 리프레시 토큰 발급 및 저장 로직
-        RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken();
+        RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
         refreshTokenService.generate(user.getId(), refreshTokenDto.tokenHash(), ip, userAgent,
                 refreshTokenDto.issuedAt(), refreshTokenDto.expiredAt());
 
