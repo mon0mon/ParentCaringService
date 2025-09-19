@@ -11,4 +11,6 @@ public @interface WithMasterUser {
     String email() default "master@example.com";
 
     String password() default "master123";
+
+    String totpSecret() default "TOTP_SECRET";
 }

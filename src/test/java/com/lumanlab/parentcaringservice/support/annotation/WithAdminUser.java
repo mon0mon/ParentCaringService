@@ -11,4 +11,6 @@ public @interface WithAdminUser {
     String email() default "admin@example.com";
 
     String password() default "admin123";
+
+    String totpSecret() default "TOTP_SECRET";
 }

@@ -7,6 +7,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenDto;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvider;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepository;
 import com.lumanlab.parentcaringservice.support.BaseApiTest;
+import com.lumanlab.parentcaringservice.support.annotation.WithTestUser;
 import com.lumanlab.parentcaringservice.token.port.inp.web.view.req.RefreshAccessTokenViewReq;
 import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
@@ -37,14 +38,15 @@ class TokenApiTest extends BaseApiTest {
     RefreshTokenRepository refreshTokenRepository;
 
     @Test
+    @WithTestUser
     @DisplayName("액세스 토큰 갱신")
     void refreshAccessToken() throws Exception {
         // 테스트용 사용자 생성 및 리프레시 토큰 생성
         String userEmail = "token@example.com";
         String password = "password123";
-        User user = authHelper.createUser(userEmail, password, UserRole.PARENT);
+        User user = authHelper.createUser(userEmail, password, null, UserRole.PARENT);
 
-        // 테스트용 리프레시 토큰 생성 
+        // 테스트용 리프레시 토큰 생성
         RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
         refreshTokenRepository.save(
                 new RefreshToken(user, refreshTokenDto.tokenHash(), "IP", USER_AGENT, OffsetDateTime.now(),

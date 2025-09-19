@@ -28,15 +28,16 @@ public class TestAuthHelper {
     /**
      * 테스트용 사용자 생성
      */
-    public User createUser(String email, String password, UserRole... roles) {
-        return userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles)));
+    public User createUser(String email, String password, String totpSecret, UserRole... roles) {
+        return userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles), totpSecret));
     }
 
     /**
      * 테스트용 사용자 생성 및 JWT 토큰 반환
      */
-    public String createUserAndGetToken(String email, String password, UserRole... roles) {
-        User savedUser = userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles)));
+    public String createUserAndGetToken(String email, String password, String totpSecret, UserRole... roles) {
+        User savedUser =
+                userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles), totpSecret));
 
         return jwtTokenService.generateAccessToken(savedUser.getId(), null);
     }
@@ -45,28 +46,28 @@ public class TestAuthHelper {
      * 기본 테스트 사용자로 JWT 토큰 생성
      */
     public String createDefaultUserToken() {
-        return createUserAndGetToken("test@example.com", "password", UserRole.PARENT);
+        return createUserAndGetToken("test@example.com", "password", null, UserRole.PARENT);
     }
 
     /**
      * 부모 권한 사용자 토큰 생성
      */
     public String createParentUserToken() {
-        return createUserAndGetToken("parent@example.com", "parent123", UserRole.PARENT);
+        return createUserAndGetToken("parent@example.com", "parent123", null, UserRole.PARENT);
     }
 
     /**
      * 관리자 권한 사용자 토큰 생성
      */
     public String createAdminUserToken() {
-        return createUserAndGetToken("admin@example.com", "admin123", UserRole.ADMIN);
+        return createUserAndGetToken("admin@example.com", "admin123", "TOTP_SECRET", UserRole.ADMIN);
     }
 
     /**
      * 마스터 권한 사용자 토큰 생성
      */
     public String createMasterUserToken() {
-        return createUserAndGetToken("master@example.com", "master123", UserRole.MASTER);
+        return createUserAndGetToken("master@example.com", "master123", "TOTP_SECRET", UserRole.MASTER);
     }
 
     /**
@@ -74,7 +75,7 @@ public class TestAuthHelper {
      * 실제 운영에서는 사용하지 말 것
      */
     public String createDocumentationToken() {
-        return createUserAndGetToken("swagger@example.com", "swagger123", UserRole.PARENT);
+        return createUserAndGetToken("swagger@example.com", "swagger123", null, UserRole.PARENT);
     }
 
     /**

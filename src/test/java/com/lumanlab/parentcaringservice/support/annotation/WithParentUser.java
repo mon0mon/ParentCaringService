@@ -11,4 +11,6 @@ public @interface WithParentUser {
     String email() default "parent@example.com";
 
     String password() default "parent123";
+
+    String totpSecret() default "TOTP_SECRET";
 }

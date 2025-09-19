@@ -14,5 +14,7 @@ public @interface WithTestUser {
 
     String password() default "password123";
 
+    String totpSecret() default "TOTP_SECRET";
+
     UserRole[] roles() default {UserRole.PARENT};
 }

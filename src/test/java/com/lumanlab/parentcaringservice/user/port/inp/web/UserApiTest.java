@@ -8,12 +8,14 @@ import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.UpdateUserTotpViewReq;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -115,7 +117,7 @@ class UserApiTest extends BaseApiTest {
     @Test
     @DisplayName("사용자 로그인")
     void loginUser() throws Exception {
-        authHelper.createUserAndGetToken("login@example.com", "password123", UserRole.PARENT);
+        authHelper.createUserAndGetToken("login@example.com", "password123", null, UserRole.PARENT);
 
         var req = new LoginUserViewReq("login@example.com", "password123");
 
@@ -145,6 +147,53 @@ class UserApiTest extends BaseApiTest {
                                         fieldWithPath("refreshToken").description("리프레시 토큰"),
                                         fieldWithPath("refreshTokenExpiredAt").description("리프레시 토큰 만료 시간")
                                 )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @WithTestUser
+    @DisplayName("사용자 TOTP 업데이트")
+    void updateUserTotp() throws Exception {
+        final String NEW_TOTP_SECRET = "NEW_TOTP_SECRET";
+
+        var req = new UpdateUserTotpViewReq(NEW_TOTP_SECRET);
+
+        mockMvc.perform(withAuth(post("/api/users/totp"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req))
+                )
+                .andExpectAll(
+                        status().isOk()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("update-user-totp",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 TOTP 업데이트")
+                                .description("현재 로그인한 유저의 TOTP를 업데이트합니다")
+                                .requestFields(
+                                        fieldWithPath("totpSecret").description(
+                                                "MFA TOTP 비밀키")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @WithTestUser
+    @DisplayName("사용자 TOTP 삭제")
+    void clearUserTotp() throws Exception {
+        mockMvc.perform(withAuth(delete("/api/users/totp")))
+                .andExpectAll(
+                        status().isOk()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("clear-user-totp",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 TOTP 삭제")
+                                .description("현재 로그인한 유저의 TOTP를 삭제합니다")
                                 .build()
                         )
                 ));
