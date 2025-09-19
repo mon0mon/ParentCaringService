@@ -29,10 +29,22 @@ public class UserAppService {
     private final RefreshTokenProvider refreshTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
-    public void registerUser(String email, String password) {
+    public void registerUser(String email, String password, String totpSecret, UserAgent userAgent) {
         String encodedPassword = passwordEncoder.encode(password);
 
-        updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT), null);
+        switch (userAgent) {
+            case UserAgent.MOBILE:
+                updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT), null);
+                break;
+            case UserAgent.PARTNER_ADMIN:
+                updateUser.register(email, encodedPassword, Set.of(UserRole.ADMIN), totpSecret);
+                break;
+            case UserAgent.LUMANLAB_ADMIN:
+                updateUser.register(email, encodedPassword, Set.of(UserRole.MASTER), totpSecret);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid user agent.");
+        }
     }
 
     public UserLoginDto loginUser(String email, String password, UserAgent userAgent, String ip) {

@@ -30,8 +30,8 @@ public class UserApi {
     }
 
     @PostMapping("/register")
-    public void registerUser(@RequestBody RegisterUserViewReq req) {
-        userAppService.registerUser(req.email(), req.password());
+    public void registerUser(@RequestHeader("User-Agent") UserAgent userAgent, @RequestBody RegisterUserViewReq req) {
+        userAppService.registerUser(req.email(), req.password(), req.totpSecret(), userAgent);
     }
 
     @PostMapping("/login")
