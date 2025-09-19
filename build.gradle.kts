@@ -43,6 +43,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
+    // GoogleAuth
+    implementation("com.warrenstrange:googleauth:1.5.0")
+
     compileOnly("org.projectlombok:lombok")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
