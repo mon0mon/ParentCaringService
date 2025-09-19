@@ -47,6 +47,10 @@ public class User {
     @Column(length = 20, nullable = false)
     private Set<UserRole> roles;
 
+    /** TOTP 비밀키 **/
+    @Column(length = 150)
+    private String totpSecret;
+
     /** 다단계 인증 여부 **/
     @Column(nullable = false)
     @ColumnDefault("false")
@@ -67,6 +71,21 @@ public class User {
         this.email = email;
         this.password = password;
         this.roles = new HashSet<>(roles);
+    }
+
+    public User(String email, String password, Collection<UserRole> roles, String totpSecret) {
+        // SuperUser 생성 시, totpSecret이 존재하는 지 확인
+        validateUserData(email, password, roles, totpSecret);
+
+        this.email = email;
+        this.password = password;
+        this.roles = new HashSet<>(roles);
+        this.totpSecret = totpSecret;
+
+        // MFA 설정 활성화가 필요할 경우, MFA 설정을 true로 변경
+        if (shouldMfaBeEnabled()) {
+            this.mfaEnabled = true;
+        }
     }
 
     /**
@@ -107,6 +126,42 @@ public class User {
     }
 
     /**
+     * 사용자의 TOTP 비밀키를 업데이트
+     *
+     * @param totpSecret 새로운 TOTP 비밀키. Null이거나 공백일 경우 예외가 발생
+     * @throws IllegalArgumentException totpSecret이 Null이거나 공백인 경우
+     */
+    public void updateTotpSecret(String totpSecret) {
+        // 주어진 totpSecret이 Null 이거나, 공백일 경우 예외 발생
+        if (!StringUtils.hasText(totpSecret)) {
+            throw new IllegalArgumentException("totpSecret must not be blank");
+        }
+
+        this.totpSecret = totpSecret;
+        this.mfaEnabled = true;
+    }
+
+    /**
+     * 사용자의 TOTP 비밀키와 다단계 인증 활성화 상태를 초기화함
+     * <p>
+     * 이 메서드는 사용자의 TOTP 비밀키를 null로 설정하고 다단계 인증을 비활성화함
+     * 그러나 사용자가 SuperUser 역할을 가지고 있다면 예외를 발생시킴
+     *
+     * @throws IllegalStateException 사용자가 SuperUser인 경우
+     */
+    public void clearTotpSecret() {
+        // 만약 사용자가 SuperUser라면, 예외 발생
+        boolean isSuperUser = roles.stream().anyMatch(UserRole::isSuperUser);
+
+        if (isSuperUser) {
+            throw new IllegalStateException("cannot clear totp secret of super user");
+        }
+
+        this.totpSecret = null;
+        this.mfaEnabled = false;
+    }
+
+    /**
      * 다단계 인증 활성화 여부를 업데이트
      *
      * @param mfaEnabled 다단계 인증 활성화 여부. true면 활성화, false면 비활성화.
@@ -135,5 +190,37 @@ public class User {
         if (roles == null || roles.isEmpty()) {
             throw new IllegalArgumentException("User role must not be null or empty");
         }
+    }
+
+    /**
+     * 사용자 데이터를 검증
+     *
+     * @param email      사용자 이메일. Null이거나 공백일 경우 예외 발생
+     * @param password   사용자 비밀번호. Null이거나 공백일 경우 예외 발생
+     * @param roles      사용자 역할 목록. Null이거나 비어있을 경우 예외 발생
+     * @param totpSecret TOTP 비밀키. 역할 목록에 SuperUser가 포함된 상태에서 Null이거나 공백일 경우 예외 발생
+     * @throws IllegalArgumentException 이메일 또는 비밀번호가 Null이거나 공백이거나,
+     *                                  역할 목록이 Null이거나 비어있거나,
+     *                                  SuperUser일 때 TOTP 비밀키가 Null이거나 공백인 경우
+     */
+    private void validateUserData(String email, String password, Collection<UserRole> roles, String totpSecret) {
+        validateUserData(email, password, roles);
+
+        // 주어진 역할이 SuperUser인지 확인
+        boolean isSuperUser = roles.stream().anyMatch(UserRole::isSuperUser);
+
+        // 유저의 역할이 SuperUser이고, totpSecret이 유효하지 않은 값이면 예외 발생
+        if (isSuperUser && !StringUtils.hasText(totpSecret)) {
+            throw new IllegalArgumentException("Super user must have a valid totp secret");
+        }
+    }
+
+    /**
+     * 다단계 인증(MFA)을 활성화해야 하는지 판단하는 메서드
+     *
+     * @return 사용자 역할 목록 중 'SuperUser' 역할이 포함되어 있으면 true, 그렇지 않으면 false 반환
+     */
+    private boolean shouldMfaBeEnabled() {
+        return roles.stream().anyMatch(UserRole::isSuperUser);
     }
 }

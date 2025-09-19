@@ -13,6 +13,7 @@ class UserTest {
 
     final String EMAIL = "john.doe@example.com";
     final String PASSWORD = "password";
+    final String TOTP_SECRET = "TOTP_SECRET";
 
     User user;
 
@@ -36,50 +37,66 @@ class UserTest {
     @Test
     @DisplayName("유저 - 생성 - ADMIN")
     void testInitUserAdmin() {
-        user = new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN));
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN), TOTP_SECRET);
 
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.ADMIN);
+        assertThat(user.getTotpSecret()).isEqualTo(TOTP_SECRET);
+        assertThat(user.getMfaEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - 생성 - ADMIN - totpSecret을 제공하지 않은 경우 에러")
+    void testInitUserAdminThrowException() {
+        assertThatThrownBy(() -> new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN), null));
     }
 
     @Test
     @DisplayName("유저 - 생성 - MASTER")
     void testInitUserMaster() {
-        user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER));
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER), TOTP_SECRET);
 
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.MASTER);
+        assertThat(user.getTotpSecret()).isEqualTo(TOTP_SECRET);
+        assertThat(user.getMfaEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - 생성 - MASTER - totpSecret을 제공하지 않은 경우 에러")
+    void testInitUserMasterMissingTotpThrowException() {
+        assertThatThrownBy(() -> new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER), null));
     }
 
     @Test
     @DisplayName("유저 - 생성 오류 - 이메일 NULL")
-    void testInitUserEmailNull() {
+    void testInitUserEmailNullThrowException() {
         assertThatThrownBy(() -> new User(null, PASSWORD, Set.of(UserRole.PARENT)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("유저 - 생성 오류 - 이메일 공백")
-    void testInitUserEmailBlank() {
+    void testInitUserEmailBlankThrowException() {
         assertThatThrownBy(() -> new User("", PASSWORD, Set.of(UserRole.PARENT)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("유저 - 생성 오류 - 비밀번호 NULL")
-    void testInitUserPasswordNull() {
+    void testInitUserPasswordNullThrowException() {
         assertThatThrownBy(() -> new User(EMAIL, null, Set.of(UserRole.PARENT)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("유저 - 생성 오류 - 비밀번호 공백")
-    void testInitUserPasswordBlank() {
+    void testInitUserPasswordBlankThrowException() {
         assertThatThrownBy(() -> new User(EMAIL, "", Set.of(UserRole.PARENT)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("유저 - 생성 오류 - 역할 NULL")
-    void testInitUserRoleNull() {
+    void testInitUserRoleNullThrowException() {
         assertThatThrownBy(() -> new User(EMAIL, PASSWORD, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -96,7 +113,7 @@ class UserTest {
 
     @Test
     @DisplayName("유저 - 비밀번호 수정 - 예외 발생 (공백 비밀번호 업데이트)")
-    void testUpdatePassword() {
+    void testUpdatePasswordBlankException() {
         String newPassword = "";
 
         assertThatThrownBy(() -> user.updatePassword(newPassword))
@@ -105,8 +122,55 @@ class UserTest {
 
     @Test
     @DisplayName("유저 - 비밀번호 수정 - 예외 발생 (NULL 비밀번호 업데이트)")
-    void testUpdatePasswordNull() {
+    void testUpdatePasswordNullException() {
         assertThatThrownBy(() -> user.updatePassword(null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("유저 - TotpSecret 수정")
+    void testUpdateTotpSecretSuccess() {
+        String newTotpSecret = "NEW_TOTP_SECRET";
+
+        user.updateTotpSecret(newTotpSecret);
+
+        assertThat(user.getTotpSecret()).isEqualTo(newTotpSecret);
+        assertThat(user.getMfaEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - TotpSecret 수정 - 예외 발생 (공백 TotpSecret 업데이트)")
+    void testUpdateTotpSecretBlankThrowException() {
+        assertThatThrownBy(() -> user.updateTotpSecret(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("유저 - TotpSecret 수정 - 예외 발생 (NULL TotpSecret 업데이트)")
+    void testUpdateTotpSecretNullThrowException() {
+        String newTotpSecret = "";
+
+        assertThatThrownBy(() -> user.updateTotpSecret(newTotpSecret))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("유저 - TotpSecret 초기화")
+    void testClearTotpSecretSuccess() {
+        user.updateTotpSecret(TOTP_SECRET);
+
+        user.clearTotpSecret();
+
+        assertThat(user.getTotpSecret()).isNull();
+        assertThat(user.getMfaEnabled()).isFalse();
+    }
+
+    @Test
+    @DisplayName("유저 - TotpSecret 초기화 - SuperUser일 경우 예외 발생")
+    void testClearTotpSecretSuperUserThrowException() {
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER), TOTP_SECRET);
+
+        assertThatThrownBy(user::clearTotpSecret)
+                .isInstanceOf(IllegalStateException.class);
     }
 }
