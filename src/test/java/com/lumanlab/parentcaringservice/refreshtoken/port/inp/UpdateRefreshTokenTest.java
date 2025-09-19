@@ -6,6 +6,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepos
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
 import com.lumanlab.parentcaringservice.support.BaseUsecaseTest;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,7 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
     final String PASSWORD = "PASSWORD";
     final String TOKEN = "TOKEN";
     final String IP = "127.0.0.1";
-    final String USER_AGENT = "Chrome/80.0.3987.132";
+    final UserAgent USER_AGENT = UserAgent.MOBILE;
     @Autowired
     UpdateRefreshToken updateRefreshToken;
     @Autowired

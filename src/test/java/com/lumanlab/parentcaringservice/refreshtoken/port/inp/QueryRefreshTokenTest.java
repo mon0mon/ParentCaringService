@@ -6,6 +6,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepos
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
 import com.lumanlab.parentcaringservice.support.BaseUsecaseTest;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,30 +22,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class QueryRefreshTokenTest extends BaseUsecaseTest {
 
-    @Autowired
-    QueryRefreshToken queryRefreshToken;
-
-    @Autowired
-    RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    RefreshTokenEncoder refreshTokenEncoder;
-
-    User user;
-    RefreshToken refreshToken;
-    RefreshToken expiredRefreshToken;
-    RefreshToken revokedRefreshToken;
-
     final String EMAIL = "john.doe@example.com";
     final String PASSWORD = "PASSWORD";
     final String TOKEN = "TOKEN_HASH";
     final String EXPIRED_TOKEN = "EXPIRED_TOKEN_HASH";
     final String REVOKED_TOKEN = "REVOKED_TOKEN_HASH";
     final String IP = "127.0.0.1";
-    final String USER_AGENT = "Chrome/80.0.3987.132";
+    final UserAgent USER_AGENT = UserAgent.MOBILE;
+    @Autowired
+    QueryRefreshToken queryRefreshToken;
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    RefreshTokenEncoder refreshTokenEncoder;
+    User user;
+    RefreshToken refreshToken;
+    RefreshToken expiredRefreshToken;
+    RefreshToken revokedRefreshToken;
 
     @BeforeEach
     void setUp() {
@@ -58,16 +54,13 @@ class QueryRefreshTokenTest extends BaseUsecaseTest {
         // 유효기간이 만료된 리프레시 토큰
         expiredRefreshToken = refreshTokenRepository.save(
                 new RefreshToken(user, refreshTokenEncoder.encode(EXPIRED_TOKEN), IP, USER_AGENT,
-                        OffsetDateTime.now().minusDays(1),
-                        OffsetDateTime.now().minusSeconds(1))
-        );
+                        OffsetDateTime.now().minusDays(1), OffsetDateTime.now().minusSeconds(1)));
 
         // 취소된 리프레시 토큰
         revokedRefreshToken = refreshTokenRepository.save(
                 new RefreshToken(null, user, refreshTokenEncoder.encode(REVOKED_TOKEN), null, IP,
-                        OffsetDateTime.now().minusDays(1),
-                        OffsetDateTime.now().plusDays(1), OffsetDateTime.now().minusSeconds(1), USER_AGENT)
-        );
+                        OffsetDateTime.now().minusDays(1), OffsetDateTime.now().plusDays(1),
+                        OffsetDateTime.now().minusSeconds(1), USER_AGENT));
     }
 
     @Test
@@ -120,8 +113,8 @@ class QueryRefreshTokenTest extends BaseUsecaseTest {
     void queryRefreshTokenByTokenThrowException1() {
         refreshTokenRepository.deleteAll();
 
-        assertThatThrownBy(() -> queryRefreshToken.findByUserAndToken(user.getId(), refreshTokenEncoder.encode(TOKEN)))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> queryRefreshToken.findByUserAndToken(user.getId(),
+                refreshTokenEncoder.encode(TOKEN))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -129,8 +122,8 @@ class QueryRefreshTokenTest extends BaseUsecaseTest {
     void queryRefreshTokenByTokenThrowException2() {
         var nonExistToken = refreshTokenEncoder.encode("NON_EXIST_TOKEN");
 
-        assertThatThrownBy(() -> queryRefreshToken.findByUserAndToken(user.getId(), nonExistToken))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> queryRefreshToken.findByUserAndToken(user.getId(), nonExistToken)).isInstanceOf(
+                IllegalArgumentException.class);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.refreshtoken.domain;
 
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,7 @@ class RefreshTokenTest {
     final String PASSWORD = "PASSWORD";
     final String TOKEN = "TOKEN";
     final String IP = "127.0.0.1";
-    final String USER_AGENT = "Chrome/80.0.3987.132";
+    final UserAgent USER_AGENT = UserAgent.MOBILE;
 
     User user;
     RefreshToken refreshToken;

@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.refreshtoken.domain;
 
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -52,9 +53,11 @@ public class RefreshToken {
     private OffsetDateTime revokedAt;
 
     /** 사용자 클라이언트의 UserAgent **/
-    private String userAgent;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private UserAgent userAgent;
 
-    public RefreshToken(User user, String tokenHash, String ip, String userAgent, OffsetDateTime issuedAt,
+    public RefreshToken(User user, String tokenHash, String ip, UserAgent userAgent, OffsetDateTime issuedAt,
                         OffsetDateTime expiredAt) {
         this.user = user;
         this.tokenHash = tokenHash;
@@ -99,7 +102,7 @@ public class RefreshToken {
      * @return 갱신된 RefreshToken 객체
      */
     public RefreshToken rotate(String tokenHash, OffsetDateTime issuedAt, OffsetDateTime expiredAt, String ip,
-                               String userAgent) {
+                               UserAgent userAgent) {
         var renewedToken = new RefreshToken(user, tokenHash, ip, userAgent, issuedAt, expiredAt);
 
         renewedToken.rotatedFrom = this;

@@ -7,6 +7,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.inp.UpdateRefreshToken
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepository;
 import com.lumanlab.parentcaringservice.security.encoder.RefreshTokenEncoder;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,7 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     }
 
     @Override
-    public void generate(Long userId, String tokenHash, String ip, String userAgent, OffsetDateTime issuedAt,
+    public void generate(Long userId, String tokenHash, String ip, UserAgent userAgent, OffsetDateTime issuedAt,
                          OffsetDateTime expiredAt) {
         User user = userRepository.findById(userId).orElseThrow();
 
@@ -74,7 +75,7 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     }
 
     @Override
-    public void rotate(Long userId, String oldToken, String renewedTokenHash, String ip, String userAgent,
+    public void rotate(Long userId, String oldToken, String renewedTokenHash, String ip, UserAgent userAgent,
                        OffsetDateTime issuedAt,
                        OffsetDateTime expiredAt) {
         RefreshToken refreshToken = findByUserAndToken(userId, oldToken);

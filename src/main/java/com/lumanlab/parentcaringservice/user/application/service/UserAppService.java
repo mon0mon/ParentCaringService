@@ -6,6 +6,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvi
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.user.application.service.dto.UserLoginDto;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.inp.QueryUser;
 import com.lumanlab.parentcaringservice.user.port.inp.UpdateUser;
@@ -34,7 +35,7 @@ public class UserAppService {
         updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT), null);
     }
 
-    public UserLoginDto loginUser(String email, String password, String userAgent, String ip) {
+    public UserLoginDto loginUser(String email, String password, UserAgent userAgent, String ip) {
         User user = queryUser.findByEmail(email);
 
         // TODO 추후 커스텀 예외로 처리할 것

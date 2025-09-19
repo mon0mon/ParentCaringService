@@ -9,6 +9,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepos
 import com.lumanlab.parentcaringservice.support.BaseApiTest;
 import com.lumanlab.parentcaringservice.token.port.inp.web.view.req.RefreshAccessTokenViewReq;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TokenApiTest extends BaseApiTest {
 
+    final UserAgent USER_AGENT = UserAgent.MOBILE;
     @Autowired
     RefreshTokenProvider refreshTokenProvider;
 
@@ -45,12 +47,12 @@ class TokenApiTest extends BaseApiTest {
         // 테스트용 리프레시 토큰 생성 
         RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
         refreshTokenRepository.save(
-                new RefreshToken(user, refreshTokenDto.tokenHash(), "IP", "User-Agent", OffsetDateTime.now(),
+                new RefreshToken(user, refreshTokenDto.tokenHash(), "IP", USER_AGENT, OffsetDateTime.now(),
                         OffsetDateTime.now().plusDays(1)));
 
         RefreshAccessTokenViewReq req = new RefreshAccessTokenViewReq(refreshTokenDto.token());
 
-        mockMvc.perform(post("/api/token/refresh").header("User-Agent", "Test-Browser/1.0")
+        mockMvc.perform(post("/api/token/refresh").header("User-Agent", USER_AGENT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpectAll(status().isOk(), jsonPath("$.accessToken").exists(), jsonPath("$.refreshToken").exists(),
@@ -83,7 +85,7 @@ class TokenApiTest extends BaseApiTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/token/refresh").header("User-Agent", "Test-Browser/1.0")
+        mockMvc.perform(post("/api/token/refresh").header("User-Agent", USER_AGENT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpectAll(status().is4xxClientError())
@@ -112,7 +114,7 @@ class TokenApiTest extends BaseApiTest {
                 }
                 """.formatted(expiredToken);
 
-        mockMvc.perform(post("/api/token/refresh").header("User-Agent", "Test-Browser/1.0")
+        mockMvc.perform(post("/api/token/refresh").header("User-Agent", USER_AGENT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpectAll(status().isUnauthorized())

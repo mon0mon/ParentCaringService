@@ -4,6 +4,7 @@ import com.lumanlab.parentcaringservice.token.application.service.TokenAppServic
 import com.lumanlab.parentcaringservice.token.application.service.dto.RefreshAccessTokenDto;
 import com.lumanlab.parentcaringservice.token.port.inp.web.view.req.RefreshAccessTokenViewReq;
 import com.lumanlab.parentcaringservice.token.port.inp.web.view.res.RefreshAccessTokenViewRes;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class TokenApi {
     private final TokenAppService tokenAppService;
 
     @PostMapping("/refresh")
-    public RefreshAccessTokenViewRes refreshAccessToken(@RequestHeader("User-Agent") String userAgent,
+    public RefreshAccessTokenViewRes refreshAccessToken(@RequestHeader("User-Agent") UserAgent userAgent,
                                                         @RequestBody RefreshAccessTokenViewReq req,
                                                         HttpServletRequest request) {
         String ip = request.getRemoteAddr();

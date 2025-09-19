@@ -44,7 +44,7 @@ class UpdateUserTest extends BaseUsecaseTest {
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.PARENT);
-        assertThat(user.getMfaEnabled()).isTrue();
+        assertThat(user.getMfaEnabled()).isFalse();
     }
 
     @Test

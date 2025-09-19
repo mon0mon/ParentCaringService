@@ -3,6 +3,7 @@ package com.lumanlab.parentcaringservice.user.port.inp.web;
 import com.lumanlab.parentcaringservice.security.UserContext;
 import com.lumanlab.parentcaringservice.user.application.service.UserAppService;
 import com.lumanlab.parentcaringservice.user.application.service.dto.UserLoginDto;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.port.inp.QueryUser;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
@@ -34,8 +35,8 @@ public class UserApi {
     }
 
     @PostMapping("/login")
-    public LoginUserViewRes loginUser(@RequestHeader("User-Agent") String userAgent, @RequestBody LoginUserViewReq req,
-                                      HttpServletRequest request) {
+    public LoginUserViewRes loginUser(@RequestHeader("User-Agent") UserAgent userAgent,
+                                      @RequestBody LoginUserViewReq req, HttpServletRequest request) {
         String ip = request.getRemoteAddr();
 
         UserLoginDto dto = userAppService.loginUser(req.email(), req.password(), userAgent, ip);

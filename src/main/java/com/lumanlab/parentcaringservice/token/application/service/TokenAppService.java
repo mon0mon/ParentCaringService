@@ -6,6 +6,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvi
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.token.application.service.dto.RefreshAccessTokenDto;
 import com.lumanlab.parentcaringservice.user.domain.User;
+import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.port.inp.QueryUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class TokenAppService {
     private final RefreshTokenProvider refreshTokenProvider;
     private final QueryUser queryUser;
 
-    public RefreshAccessTokenDto refreshAccessToken(String refreshToken, String userAgent, String ip) {
+    public RefreshAccessTokenDto refreshAccessToken(String refreshToken, UserAgent userAgent, String ip) {
         // 현재 refreshToken이 유효한지 조회
         Long userId = Long.valueOf(jwtTokenService.extractSubject(refreshToken));
         // 실제로 존재하는 유저인지 체크
