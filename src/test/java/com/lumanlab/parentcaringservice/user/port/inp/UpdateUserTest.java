@@ -17,16 +17,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UpdateUserTest extends BaseUsecaseTest {
 
-    @Autowired
-    UpdateUser updateUser;
-
-    @Autowired
-    UserRepository userRepository;
-
-    User user;
-
     final String EMAIL = "jhon.doe@example.com";
     final String PASSWORD = "PASSWORD";
+    final String NEW_EMAIL = "foo.bar@example.com";
+    final String NEW_PASSWORD = "NEW_PASSWORD";
+    final String TOTP_SECRET = "TOTP_SECRET";
+    @Autowired
+    UpdateUser updateUser;
+    @Autowired
+    UserRepository userRepository;
+    User user;
 
     @BeforeEach
     void setUp() {
@@ -36,10 +36,7 @@ class UpdateUserTest extends BaseUsecaseTest {
     @Test
     @DisplayName("유저 - 등록 - PARENT 역할 유저")
     void registerUserRoleParent() {
-        final String NEW_EMAIL = "foo.bar@example.com";
-        final String NEW_PASSWORD = "NEW_PASSWORD";
-
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT));
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT), null);
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
@@ -53,10 +50,7 @@ class UpdateUserTest extends BaseUsecaseTest {
     @Test
     @DisplayName("유저 - 등록 - ADMIN 역할 유저")
     void registerUserRoleAdmin() {
-        final String NEW_EMAIL = "foo.bar@example.com";
-        final String NEW_PASSWORD = "NEW_PASSWORD";
-
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.ADMIN));
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.ADMIN), TOTP_SECRET);
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
@@ -70,10 +64,7 @@ class UpdateUserTest extends BaseUsecaseTest {
     @Test
     @DisplayName("유저 - 등록 - MASTER 역할 유저")
     void registerUserRoleMaster() {
-        final String NEW_EMAIL = "foo.bar@example.com";
-        final String NEW_PASSWORD = "NEW_PASSWORD";
-
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.MASTER));
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.MASTER), TOTP_SECRET);
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 

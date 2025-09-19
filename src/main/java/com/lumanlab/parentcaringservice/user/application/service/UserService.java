@@ -29,8 +29,8 @@ public class UserService implements QueryUser, UpdateUser {
     }
 
     @Override
-    public void register(String email, String password, Collection<UserRole> roles) {
-        var user = new User(email, password, roles);
+    public void register(String email, String password, Collection<UserRole> roles, String totpSecret) {
+        var user = new User(email, password, roles, totpSecret);
 
         userRepository.save(user);
     }

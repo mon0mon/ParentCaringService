@@ -31,7 +31,7 @@ public class UserAppService {
     public void registerUser(String email, String password) {
         String encodedPassword = passwordEncoder.encode(password);
 
-        updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT));
+        updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT), null);
     }
 
     public UserLoginDto loginUser(String email, String password, String userAgent, String ip) {
