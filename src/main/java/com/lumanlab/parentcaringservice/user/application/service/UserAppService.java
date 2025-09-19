@@ -65,4 +65,12 @@ public class UserAppService {
 
         return new UserLoginDto(accessToken, refreshTokenDto.token(), refreshTokenDto.expiredAt().toEpochSecond());
     }
+
+    public void updateUserTotp(Long userId, String totpSecret) {
+        User user = queryUser.findById(userId);
+
+        // TODO TOTP-Secret을 그대로 입력 받는 것이 아닌, Nonce로 조회 가능한 형태로 개선할 것
+
+        updateUser.updateTotp(user.getId(), totpSecret);
+    }
 }

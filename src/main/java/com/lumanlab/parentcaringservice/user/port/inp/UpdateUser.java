@@ -10,4 +10,8 @@ public interface UpdateUser {
     void updatePassword(Long userId, String password);
 
     void withdraw(Long userId);
+
+    void updateTotp(Long userId, String totpSecret);
+
+    void clearTotp(Long userId);
 }

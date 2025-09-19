@@ -109,4 +109,26 @@ class UpdateUserTest extends BaseUsecaseTest {
 
         assertThat(user.getStatus()).isEqualTo(UserStatus.WITHDRAWN);
     }
+
+    @Test
+    @DisplayName("유저 - TOTP 수정")
+    void updateTotp() {
+        final String NEW_TOTP_SECRET = "NEW_TOTP_SECRET";
+
+        updateUser.updateTotp(user.getId(), NEW_TOTP_SECRET);
+
+        assertThat(user.getTotpSecret()).isEqualTo(NEW_TOTP_SECRET);
+        assertThat(user.getMfaEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - TOTP 삭제")
+    void clearTotp() {
+        user = userRepository.save(new User(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT), TOTP_SECRET));
+
+        updateUser.clearTotp(user.getId());
+
+        assertThat(user.getTotpSecret()).isNull();
+        assertThat(user.getMfaEnabled()).isFalse();
+    }
 }

@@ -30,22 +30,36 @@ public class UserService implements QueryUser, UpdateUser {
 
     @Override
     public void register(String email, String password, Collection<UserRole> roles, String totpSecret) {
-        var user = new User(email, password, roles, totpSecret);
+        User user = new User(email, password, roles, totpSecret);
 
         userRepository.save(user);
     }
 
     @Override
     public void updatePassword(Long userId, String password) {
-        var user = findById(userId);
+        User user = findById(userId);
 
         user.updatePassword(password);
     }
 
     @Override
     public void withdraw(Long userId) {
-        var user = findById(userId);
+        User user = findById(userId);
 
         user.withdraw();
+    }
+
+    @Override
+    public void updateTotp(Long userId, String totpSecret) {
+        User user = findById(userId);
+
+        user.updateTotpSecret(totpSecret);
+    }
+
+    @Override
+    public void clearTotp(Long userId) {
+        User user = findById(userId);
+
+        user.clearTotpSecret();
     }
 }
