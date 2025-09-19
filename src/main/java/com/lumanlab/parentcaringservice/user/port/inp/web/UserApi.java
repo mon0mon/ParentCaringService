@@ -34,7 +34,7 @@ public class UserApi {
 
     @PostMapping("/register")
     public void registerUser(@RequestHeader("User-Agent") UserAgent userAgent, @RequestBody RegisterUserViewReq req) {
-        userAppService.registerUser(req.email(), req.password(), req.totpSecret(), userAgent);
+        userAppService.registerUser(req.email(), req.password(), userAgent);
     }
 
     @PostMapping("/login")

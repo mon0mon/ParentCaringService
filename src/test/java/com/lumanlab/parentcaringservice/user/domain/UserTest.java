@@ -35,35 +35,13 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("유저 - 생성 - ADMIN")
+    @DisplayName("유저 - 생성 - TOTP Secret을 미리 등록")
     void testInitUserAdmin() {
-        user = new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN), TOTP_SECRET);
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT), TOTP_SECRET);
 
-        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.ADMIN);
+        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.PARENT);
         assertThat(user.getTotpSecret()).isEqualTo(TOTP_SECRET);
         assertThat(user.getMfaEnabled()).isTrue();
-    }
-
-    @Test
-    @DisplayName("유저 - 생성 - ADMIN - totpSecret을 제공하지 않은 경우 에러")
-    void testInitUserAdminThrowException() {
-        assertThatThrownBy(() -> new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN), null));
-    }
-
-    @Test
-    @DisplayName("유저 - 생성 - MASTER")
-    void testInitUserMaster() {
-        user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER), TOTP_SECRET);
-
-        assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.MASTER);
-        assertThat(user.getTotpSecret()).isEqualTo(TOTP_SECRET);
-        assertThat(user.getMfaEnabled()).isTrue();
-    }
-
-    @Test
-    @DisplayName("유저 - 생성 - MASTER - totpSecret을 제공하지 않은 경우 에러")
-    void testInitUserMasterMissingTotpThrowException() {
-        assertThatThrownBy(() -> new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER), null));
     }
 
     @Test
@@ -172,5 +150,29 @@ class UserTest {
 
         assertThatThrownBy(user::clearTotpSecret)
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("유저 - MFA 등록이 필요한지 확인 - PARENT 역할인 경우 FALSE")
+    void parentUserShouldMfaEnabled() {
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.PARENT));
+
+        assertThat(user.shouldInitializeMfa()).isFalse();
+    }
+
+    @Test
+    @DisplayName("유저 - MFA 등록이 필요한지 확인 - ADMIN 역할인 경우 TRUE")
+    void adminUserShouldMfaEnabled() {
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.ADMIN));
+
+        assertThat(user.shouldInitializeMfa()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - MFA 등록이 필요한지 확인 - MASTER 역할인 경우 FALSE")
+    void masterUserShouldMfaEnabled() {
+        user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER));
+
+        assertThat(user.shouldInitializeMfa()).isTrue();
     }
 }

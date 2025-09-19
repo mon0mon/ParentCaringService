@@ -58,7 +58,7 @@ class UserApiTest extends BaseApiTest {
     @Test
     @DisplayName("사용자 회원가입")
     void registerUser() throws Exception {
-        var req = new RegisterUserViewReq("newuser@example.com", "newpassword123", null);
+        var req = new RegisterUserViewReq("newuser@example.com", "newpassword123");
 
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,39 +75,7 @@ class UserApiTest extends BaseApiTest {
                                 .description("새로운 사용자를 등록합니다")
                                 .requestFields(
                                         fieldWithPath("email").description("사용자 이메일"),
-                                        fieldWithPath("password").description("사용자 비밀번호"),
-                                        fieldWithPath("totpSecret").description(
-                                                        "MFA TOTP 비밀키 (ADMIN, MASTER 권한 유저에게는 필수 값)")
-                                                .optional()
-                                )
-                                .build()
-                        )
-                ));
-    }
-
-    @Test
-    @DisplayName("사용자 회원가입 - SuperUser 회원가입 시, TOTP가 누락되면 예외 발생")
-    void registerSuperUserThrowException() throws Exception {
-        var req = new RegisterUserViewReq("newuser@example.com", "newpassword123", null);
-
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req))
-                        .header("User-Agent", UserAgent.LUMANLAB_ADMIN))
-                .andExpectAll(
-                        status().isBadRequest()
-                )
-                .andDo(MockMvcRestDocumentationWrapper.document("register-user-TOTP-missing",
-                        resource(ResourceSnippetParameters.builder()
-                                .tag("User")
-                                .summary("사용자 회원가입 - TOTP 에러")
-                                .description("SuperUser 회원가입 시, TOTP가 누락되면 예외 발생")
-                                .requestFields(
-                                        fieldWithPath("email").description("사용자 이메일"),
-                                        fieldWithPath("password").description("사용자 비밀번호"),
-                                        fieldWithPath("totpSecret").description(
-                                                        "MFA TOTP 비밀키 (ADMIN, MASTER 권한 유저에게는 필수 값)")
-                                                .optional()
+                                        fieldWithPath("password").description("사용자 비밀번호")
                                 )
                                 .build()
                         )

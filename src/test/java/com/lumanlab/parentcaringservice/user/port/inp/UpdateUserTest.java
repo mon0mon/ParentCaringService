@@ -36,7 +36,7 @@ class UpdateUserTest extends BaseUsecaseTest {
     @Test
     @DisplayName("유저 - 등록 - PARENT 역할 유저")
     void registerUserRoleParent() {
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT), null);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.PARENT));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
@@ -50,7 +50,7 @@ class UpdateUserTest extends BaseUsecaseTest {
     @Test
     @DisplayName("유저 - 등록 - ADMIN 역할 유저")
     void registerUserRoleAdmin() {
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.ADMIN), TOTP_SECRET);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.ADMIN));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
@@ -58,13 +58,13 @@ class UpdateUserTest extends BaseUsecaseTest {
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.ADMIN);
-        assertThat(user.getMfaEnabled()).isTrue();
+        assertThat(user.shouldInitializeMfa()).isTrue();
     }
 
     @Test
     @DisplayName("유저 - 등록 - MASTER 역할 유저")
     void registerUserRoleMaster() {
-        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.MASTER), TOTP_SECRET);
+        updateUser.register(NEW_EMAIL, NEW_PASSWORD, Set.of(UserRole.MASTER));
 
         var user = userRepository.findByEmail(NEW_EMAIL).orElseThrow();
 
@@ -72,6 +72,7 @@ class UpdateUserTest extends BaseUsecaseTest {
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.MASTER);
+        assertThat(user.shouldInitializeMfa()).isTrue();
     }
 
     @Test

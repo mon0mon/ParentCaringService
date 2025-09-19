@@ -74,17 +74,17 @@ public class User {
     }
 
     public User(String email, String password, Collection<UserRole> roles, String totpSecret) {
-        // SuperUser 생성 시, totpSecret이 존재하는 지 확인
-        validateUserData(email, password, roles, totpSecret);
+        // 사용자 정보가 유효한 값인지 확인
+        validateUserData(email, password, roles);
 
         this.email = email;
         this.password = password;
         this.roles = new HashSet<>(roles);
-        this.totpSecret = totpSecret;
 
-        // MFA 설정 활성화가 필요할 경우, MFA 설정을 true로 변경
-        if (shouldMfaBeEnabled()) {
+        // 주어진 TotpSecret이 유효한 경우에만, 정보를 등록
+        if (isTotpSecretValid(totpSecret)) {
             this.mfaEnabled = true;
+            this.totpSecret = totpSecret;
         }
     }
 
@@ -162,6 +162,19 @@ public class User {
     }
 
     /**
+     * SuperUser인지 확인하고, 다단계 인증(MFA)이 초기화되지 않은 상태인지 판단.
+     *
+     * @return true인 경우 SuperUser이며 MFA가 아직 초기화되지 않은 상태
+     */
+    public boolean shouldInitializeMfa() {
+        boolean isSuperUser = roles.stream().anyMatch(UserRole::isSuperUser);
+        // MFA가 초기화 된 상태인지 확인
+        boolean alreadyMfaInitialized = mfaEnabled == true && StringUtils.hasText(totpSecret);
+
+        return isSuperUser && !alreadyMfaInitialized;
+    }
+
+    /**
      * 사용자 데이터를 검증.
      *
      * @param email    사용자 이메일. Null이거나 공백일 경우 예외 발생
@@ -183,35 +196,7 @@ public class User {
         }
     }
 
-    /**
-     * 사용자 데이터를 검증
-     *
-     * @param email      사용자 이메일. Null이거나 공백일 경우 예외 발생
-     * @param password   사용자 비밀번호. Null이거나 공백일 경우 예외 발생
-     * @param roles      사용자 역할 목록. Null이거나 비어있을 경우 예외 발생
-     * @param totpSecret TOTP 비밀키. 역할 목록에 SuperUser가 포함된 상태에서 Null이거나 공백일 경우 예외 발생
-     * @throws IllegalArgumentException 이메일 또는 비밀번호가 Null이거나 공백이거나,
-     *                                  역할 목록이 Null이거나 비어있거나,
-     *                                  SuperUser일 때 TOTP 비밀키가 Null이거나 공백인 경우
-     */
-    private void validateUserData(String email, String password, Collection<UserRole> roles, String totpSecret) {
-        validateUserData(email, password, roles);
-
-        // 주어진 역할이 SuperUser인지 확인
-        boolean isSuperUser = roles.stream().anyMatch(UserRole::isSuperUser);
-
-        // 유저의 역할이 SuperUser이고, totpSecret이 유효하지 않은 값이면 예외 발생
-        if (isSuperUser && !StringUtils.hasText(totpSecret)) {
-            throw new IllegalArgumentException("Super user must have a valid totp secret");
-        }
-    }
-
-    /**
-     * 다단계 인증(MFA)을 활성화해야 하는지 판단하는 메서드
-     *
-     * @return 사용자 역할 목록 중 'SuperUser' 역할이 포함되어 있으면 true, 그렇지 않으면 false 반환
-     */
-    private boolean shouldMfaBeEnabled() {
-        return roles.stream().anyMatch(UserRole::isSuperUser);
+    private boolean isTotpSecretValid(String totpSecret) {
+        return StringUtils.hasText(totpSecret);
     }
 }

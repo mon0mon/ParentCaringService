@@ -29,18 +29,18 @@ public class UserAppService {
     private final RefreshTokenProvider refreshTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
-    public void registerUser(String email, String password, String totpSecret, UserAgent userAgent) {
+    public void registerUser(String email, String password, UserAgent userAgent) {
         String encodedPassword = passwordEncoder.encode(password);
 
         switch (userAgent) {
             case UserAgent.MOBILE:
-                updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT), null);
+                updateUser.register(email, encodedPassword, Set.of(UserRole.PARENT));
                 break;
             case UserAgent.PARTNER_ADMIN:
-                updateUser.register(email, encodedPassword, Set.of(UserRole.ADMIN), totpSecret);
+                updateUser.register(email, encodedPassword, Set.of(UserRole.ADMIN));
                 break;
             case UserAgent.LUMANLAB_ADMIN:
-                updateUser.register(email, encodedPassword, Set.of(UserRole.MASTER), totpSecret);
+                updateUser.register(email, encodedPassword, Set.of(UserRole.MASTER));
                 break;
             default:
                 throw new IllegalArgumentException("Invalid user agent.");
