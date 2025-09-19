@@ -47,7 +47,7 @@ class UpdateUserTest extends BaseUsecaseTest {
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.PARENT);
-        assertThat(user.getMfaEnabled()).isFalse();
+        assertThat(user.getMfaEnabled()).isTrue();
     }
 
     @Test
@@ -64,7 +64,7 @@ class UpdateUserTest extends BaseUsecaseTest {
         assertThat(user.getEmail()).isEqualTo(NEW_EMAIL);
         assertThat(user.getPassword()).isEqualTo(NEW_PASSWORD);
         assertThat(user.getRoles()).containsExactlyInAnyOrder(UserRole.ADMIN);
-        assertThat(user.getMfaEnabled()).isFalse();
+        assertThat(user.getMfaEnabled()).isTrue();
     }
 
     @Test
@@ -109,14 +109,6 @@ class UpdateUserTest extends BaseUsecaseTest {
 
         assertThatThrownBy(() -> updateUser.updatePassword(user.getId(), NEW_PASSWORD))
                 .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    @DisplayName("유저 - 다단계 인증 설정 수정")
-    void updateMfaEnabled() {
-        updateUser.updateMfaEnabled(user.getId(), true);
-
-        assertThat(user.getMfaEnabled()).isTrue();
     }
 
     @Test

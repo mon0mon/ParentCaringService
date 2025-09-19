@@ -43,13 +43,6 @@ public class UserService implements QueryUser, UpdateUser {
     }
 
     @Override
-    public void updateMfaEnabled(Long userId, boolean mfaEnabled) {
-        var user = findById(userId);
-
-        user.updateMfaEnabled(mfaEnabled);
-    }
-
-    @Override
     public void withdraw(Long userId) {
         var user = findById(userId);
 

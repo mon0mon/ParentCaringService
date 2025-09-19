@@ -162,15 +162,6 @@ public class User {
     }
 
     /**
-     * 다단계 인증 활성화 여부를 업데이트
-     *
-     * @param mfaEnabled 다단계 인증 활성화 여부. true면 활성화, false면 비활성화.
-     */
-    public void updateMfaEnabled(Boolean mfaEnabled) {
-        this.mfaEnabled = mfaEnabled;
-    }
-
-    /**
      * 사용자 데이터를 검증.
      *
      * @param email    사용자 이메일. Null이거나 공백일 경우 예외 발생

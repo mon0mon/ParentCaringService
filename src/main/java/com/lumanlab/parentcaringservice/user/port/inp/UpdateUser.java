@@ -9,7 +9,5 @@ public interface UpdateUser {
 
     void updatePassword(Long userId, String password);
 
-    void updateMfaEnabled(Long userId, boolean mfaEnabled);
-
     void withdraw(Long userId);
 }
