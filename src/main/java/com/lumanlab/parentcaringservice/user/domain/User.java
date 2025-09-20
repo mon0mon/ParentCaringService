@@ -1,5 +1,6 @@
 package com.lumanlab.parentcaringservice.user.domain;
 
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -46,6 +47,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private Set<UserRole> roles;
+
+    /** 사용자 OAuth2 연동 관리 **/
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user",
+            cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<OAuth2Link> oAuth2Links = new HashSet<>();
 
     /** TOTP 비밀키 **/
     @Column(length = 150)
@@ -172,6 +178,24 @@ public class User {
         boolean alreadyMfaInitialized = mfaEnabled == true && StringUtils.hasText(totpSecret);
 
         return isSuperUser && !alreadyMfaInitialized;
+    }
+
+    /**
+     * 사용자에게 OAuth2 연동을 추가하는 메서드
+     *
+     * @param oAuth2Link 추가하려는 OAuth2 연동 객체
+     */
+    public void addOAuth2Link(OAuth2Link oAuth2Link) {
+        oAuth2Links.add(oAuth2Link);
+    }
+
+    /**
+     * 사용자와 연동된 특정 OAuth2 연동 객체를 제거함
+     *
+     * @param oAuth2Link 제거하려는 OAuth2 연동 객체
+     */
+    public void removeOAuth2Link(OAuth2Link oAuth2Link) {
+        oAuth2Links.remove(oAuth2Link);
     }
 
     /**
