@@ -1,44 +1,27 @@
 package com.lumanlab.parentcaringservice.advice;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Map;
 
-/**
- * 에러 응답 DTO
- */
 @Getter
-@Builder
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
 
-    private final int status;
-    private final String error;
+    private final String errorCode;
     private final String message;
-    private final String path;
-    private final LocalDateTime timestamp;
-    private final String trace;
+    private final long timestamp;
+    private final Map<String, Object> additionalData;
 
-    public static ErrorResponse of(int status, String error, String message, String path) {
-        return ErrorResponse.builder()
-                .status(status)
-                .error(error)
-                .message(message)
-                .path(path)
-                .timestamp(LocalDateTime.now())
-                .build();
+    public ErrorResponse(String errorCode, String message) {
+        this(errorCode, message, Instant.now().getEpochSecond(), null);
     }
 
-    public static ErrorResponse of(int status, String error, String message, String path, String trace) {
-        return ErrorResponse.builder()
-                .status(status)
-                .error(error)
-                .message(message)
-                .path(path)
-                .timestamp(LocalDateTime.now())
-                .trace(trace)
-                .build();
+    public ErrorResponse(String errorCode, String message, Map<String, Object> additionalData) {
+        this(errorCode, message, Instant.now().getEpochSecond(), additionalData);
     }
 }
