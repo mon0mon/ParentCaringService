@@ -18,14 +18,26 @@ public class TotpService {
     private final TotpProvider totpProvider;
 
     public GenerateTotpDto generateTotp(String nonce) {
-        // TODO nonce로 UserId 조회
+        // nonce로 UserId 조회
         Long userId = nonceService.getUserIdByNonce(nonce);
         User user = queryUser.findById(userId);
 
-        // TODO TOTP Secret과 QR Image 생성
+        // TOTP Secret과 QR Image 생성
         TotpProviderGenerateTotpDto totpDto = totpProvider.generateTotp(userId);
 
-        // TODO User totpSecret 수정
+        // User totpSecret 수정
+        user.updateTotpSecret(totpDto.totpSecret());
+
+        return new GenerateTotpDto(totpDto.qrUrl());
+    }
+
+    public GenerateTotpDto generateTotp(Long userId) {
+        User user = queryUser.findById(userId);
+
+        // TOTP Secret과 QR Image 생성
+        TotpProviderGenerateTotpDto totpDto = totpProvider.generateTotp(userId);
+
+        // User totpSecret 수정
         user.updateTotpSecret(totpDto.totpSecret());
 
         return new GenerateTotpDto(totpDto.qrUrl());

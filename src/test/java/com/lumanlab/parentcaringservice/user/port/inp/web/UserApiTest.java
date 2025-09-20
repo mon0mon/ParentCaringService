@@ -11,7 +11,6 @@ import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.UpdateUserTotpViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -216,25 +215,18 @@ class UserApiTest extends BaseApiTest {
     @WithTestUser
     @DisplayName("사용자 TOTP 업데이트")
     void updateUserTotp() throws Exception {
-        final String NEW_TOTP_SECRET = "NEW_TOTP_SECRET";
-
-        var req = new UpdateUserTotpViewReq(NEW_TOTP_SECRET);
-
-        mockMvc.perform(withAuth(post("/api/users/totp"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req))
-                )
+        mockMvc.perform(withAuth(post("/api/users/totp")))
                 .andExpectAll(
-                        status().isOk()
+                        status().isOk(),
+                        jsonPath("image").exists()
                 )
                 .andDo(MockMvcRestDocumentationWrapper.document("update-user-totp",
                         resource(ResourceSnippetParameters.builder()
                                 .tag("User")
                                 .summary("사용자 TOTP 업데이트")
                                 .description("현재 로그인한 유저의 TOTP를 업데이트합니다")
-                                .requestFields(
-                                        fieldWithPath("totpSecret").description(
-                                                "MFA TOTP 비밀키")
+                                .responseFields(
+                                        fieldWithPath("image").description("TOTP QR 코드 이미지")
                                 )
                                 .build()
                         )

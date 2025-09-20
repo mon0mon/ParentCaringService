@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.user.port.inp.web;
 
 import com.lumanlab.parentcaringservice.security.UserContext;
+import com.lumanlab.parentcaringservice.totp.application.service.dto.GenerateTotpDto;
 import com.lumanlab.parentcaringservice.user.application.service.UserAppService;
 import com.lumanlab.parentcaringservice.user.application.service.dto.UserLoginDto;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
@@ -8,10 +9,10 @@ import com.lumanlab.parentcaringservice.user.port.inp.QueryUser;
 import com.lumanlab.parentcaringservice.user.port.inp.UpdateUser;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.UpdateUserTotpViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.GetUserProfileViewRes;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.LoginUserViewRes;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.UpdateUserTotpViewRes;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.VerifyUserTotpViewRes;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -50,10 +51,12 @@ public class UserApi {
     }
 
     @PostMapping("/totp")
-    public void updateUserTotp(@RequestBody UpdateUserTotpViewReq req) {
+    public UpdateUserTotpViewRes updateUserTotp() {
         Long userId = userContext.getCurrentUserId().orElseThrow();
 
-        userAppService.updateUserTotp(userId, req.totpSecret());
+        GenerateTotpDto dto = userAppService.updateUserTotp(userId);
+
+        return new UpdateUserTotpViewRes(dto);
     }
 
     @DeleteMapping("/totp")

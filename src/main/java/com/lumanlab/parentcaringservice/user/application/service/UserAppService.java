@@ -9,6 +9,8 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvi
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.totp.application.service.NonceService;
 import com.lumanlab.parentcaringservice.totp.application.service.TotpProvider;
+import com.lumanlab.parentcaringservice.totp.application.service.TotpService;
+import com.lumanlab.parentcaringservice.totp.application.service.dto.GenerateTotpDto;
 import com.lumanlab.parentcaringservice.user.application.service.dto.UserLoginDto;
 import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
@@ -35,6 +37,7 @@ public class UserAppService {
     private final RefreshTokenService refreshTokenService;
     private final NonceService nonceService;
     private final TotpProvider totpProvider;
+    private final TotpService totpService;
 
     public void registerUser(String email, String password, UserAgent userAgent) {
         String encodedPassword = passwordEncoder.encode(password);
@@ -85,10 +88,10 @@ public class UserAppService {
         return new UserLoginDto(accessToken, refreshTokenDto.token(), refreshTokenDto.expiredAt().toEpochSecond());
     }
 
-    public void updateUserTotp(Long userId, String totpSecret) {
+    public GenerateTotpDto updateUserTotp(Long userId) {
         User user = queryUser.findById(userId);
 
-        updateUser.updateTotp(user.getId(), totpSecret);
+        return totpService.generateTotp(userId);
     }
 
     public UserLoginDto verifyUserTotp(String nonce, Integer totpVerificationCode, UserAgent userAgent, String ip) {
