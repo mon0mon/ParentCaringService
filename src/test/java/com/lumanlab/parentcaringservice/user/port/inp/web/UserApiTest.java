@@ -4,25 +4,40 @@ import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.lumanlab.parentcaringservice.support.BaseApiTest;
 import com.lumanlab.parentcaringservice.support.annotation.WithTestUser;
+import com.lumanlab.parentcaringservice.totp.application.service.NonceService;
+import com.lumanlab.parentcaringservice.totp.application.service.TotpProvider;
+import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.UpdateUserTotpViewReq;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UserApiTest extends BaseApiTest {
+
+    @Autowired
+    private NonceService nonceService;
+
+    @MockitoSpyBean
+    private TotpProvider totpProvider;
 
     @Test
     @WithTestUser
@@ -96,7 +111,8 @@ class UserApiTest extends BaseApiTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.accessToken").exists(),
-                        jsonPath("$.refreshToken").exists()
+                        jsonPath("$.refreshToken").exists(),
+                        jsonPath("$.refreshTokenExpiredAt").exists()
                 )
                 .andDo(MockMvcRestDocumentationWrapper.document("login-user",
                         resource(ResourceSnippetParameters.builder()
@@ -114,6 +130,82 @@ class UserApiTest extends BaseApiTest {
                                         fieldWithPath("accessToken").description("액세스 토큰"),
                                         fieldWithPath("refreshToken").description("리프레시 토큰"),
                                         fieldWithPath("refreshTokenExpiredAt").description("리프레시 토큰 만료 시간")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 로그인 - MFA 초기화가 필요한 경우 예외 발생")
+    void loginUserMfaInitializeRequireException() throws Exception {
+        authHelper.createUserAndGetToken("login@example.com", "password123", null, UserRole.MASTER);
+
+        var req = new LoginUserViewReq("login@example.com", "password123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("User-Agent", UserAgent.LUMANLAB_ADMIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().isPreconditionRequired(),
+                        jsonPath("$.additionalData.nonce").exists()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-mfa-initialize-require-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 로그인 - MFA 등록 예외")
+                                .description("ADMIN, MASTER 사용자는 MFA 설정이 안되어있는 경우, MFA 등록 예외 발생")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)"),
+                                        subsectionWithPath("additionalData").description("에러 추가 정보").optional()
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 로그인 - MFA 인증이 필요한 경우 예외 발생")
+    void loginUserMfaVerificationRequireException() throws Exception {
+        authHelper.createUserAndGetToken("login@example.com", "password123", "TOTP_SECRET", UserRole.MASTER);
+
+        var req = new LoginUserViewReq("login@example.com", "password123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("User-Agent", UserAgent.LUMANLAB_ADMIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().isPreconditionRequired(),
+                        jsonPath("$.additionalData.nonce").exists()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-mfa-verification-require-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 로그인 - MFA 인증 필요 예외")
+                                .description("MFA 설정이 true인 사용자는, MFA 인증 코드를 추가로 인증해야함")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)"),
+                                        subsectionWithPath("additionalData").description("에러 추가 정보").optional()
                                 )
                                 .build()
                         )
@@ -162,6 +254,118 @@ class UserApiTest extends BaseApiTest {
                                 .tag("User")
                                 .summary("사용자 TOTP 삭제")
                                 .description("현재 로그인한 유저의 TOTP를 삭제합니다")
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 TOTP 인증")
+    void userTotpVerification() throws Exception {
+        User user = authHelper.createUser("login@example.com", "password123", "TOTP_SECRET", UserRole.PARENT);
+        String nonce = nonceService.generateNonce(user.getId());
+
+        doReturn(true).when(totpProvider).verifyTotp(any(String.class), any(Integer.class));
+
+        var req = new VerifyUserTotpViewReq(nonce, 123456);
+
+        mockMvc.perform((post("/api/users/totp/verify"))
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req))
+                )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.accessToken").exists(),
+                        jsonPath("$.refreshToken").exists(),
+                        jsonPath("$.refreshTokenExpiredAt").exists()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("verify-user-totp",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 TOTP 인증 코드 검증")
+                                .description("MFA 설정이 true인 사용자들을 대상으로, TOTP 인증 코드를 검증")
+                                .requestFields(
+                                        fieldWithPath("nonce").description("사용자를 증빙할 임시 nonce"),
+                                        fieldWithPath("verificationCode").description("TOTP 인증 코드")
+                                )
+                                .responseFields(
+                                        fieldWithPath("accessToken").description("액세스 토큰"),
+                                        fieldWithPath("refreshToken").description("리프레시 토큰"),
+                                        fieldWithPath("refreshTokenExpiredAt").description("리프레시 토큰 만료 시간")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 TOTP 인증 - MFA 인증이 false 인 경우 예외")
+    void userTotpVerificationMfaEnabledFalseThrowException() throws Exception {
+        User user = authHelper.createUser("login@example.com", "password123", null, UserRole.PARENT);
+        String nonce = nonceService.generateNonce(user.getId());
+
+        var req = new VerifyUserTotpViewReq(nonce, 123456);
+
+        mockMvc.perform((post("/api/users/totp/verify"))
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req))
+                )
+                .andExpectAll(
+                        status().is4xxClientError()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("verify-user-totp-mfa-enabled-false-throw-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 TOTP 인증 - MFA 설정이 False인 경우 예외")
+                                .description("MFA 설정이 false인 사용자는 예외 발생")
+                                .requestFields(
+                                        fieldWithPath("nonce").description("사용자를 증빙할 임시 nonce"),
+                                        fieldWithPath("verificationCode").description("TOTP 인증 코드")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 TOTP 인증 - 인증 코드 검증이 실패한 경우 예외 발생")
+    void userTotpVerificationVerificationCodeFailToVerifyThrowException() throws Exception {
+        User user = authHelper.createUser("login@example.com", "password123", "TOTP_SECRET", UserRole.PARENT);
+        String nonce = nonceService.generateNonce(user.getId());
+
+        doReturn(false).when(totpProvider).verifyTotp(any(String.class), any(Integer.class));
+
+        var req = new VerifyUserTotpViewReq(nonce, 123456);
+
+        mockMvc.perform((post("/api/users/totp/verify"))
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req))
+                )
+                .andExpectAll(
+                        status().isUnauthorized()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("verify-user-totp",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 TOTP 인증 코드 검증")
+                                .description("MFA 설정이 true인 사용자들을 대상으로, TOTP 인증 코드를 검증")
+                                .requestFields(
+                                        fieldWithPath("nonce").description("사용자를 증빙할 임시 nonce"),
+                                        fieldWithPath("verificationCode").description("TOTP 인증 코드")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
                                 .build()
                         )
                 ));

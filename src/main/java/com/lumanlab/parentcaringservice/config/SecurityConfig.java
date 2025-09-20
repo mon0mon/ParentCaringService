@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .permitAll()
                         // 공개 API (인증 불필요)
                         .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/login",
-                                "/api/token/refresh")
+                                "/api/token/refresh", "/api/totp", "/api/users/totp/verify")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll() // CORS preflight 요청 허용

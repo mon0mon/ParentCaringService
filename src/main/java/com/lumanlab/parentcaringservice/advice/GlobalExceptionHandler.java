@@ -4,6 +4,7 @@ import com.lumanlab.parentcaringservice.exception.MfaInitializationRequiredExcep
 import com.lumanlab.parentcaringservice.exception.MfaVerificationFailedException;
 import com.lumanlab.parentcaringservice.exception.MfaVerificationRequiredException;
 import com.lumanlab.parentcaringservice.exception.ServiceException;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,20 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(errorResponse);
+    }
+
+    /**
+     * MFA 인증 실패 예외 처리
+     */
+    @ExceptionHandler(MfaVerificationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleMfaVerificationRequired(MfaVerificationFailedException e) {
+        log.warn("MFA verification failed: {}", e.getMessage(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                e.getErrorCode(), e.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -89,7 +104,7 @@ public class GlobalExceptionHandler {
                 e.getErrorCode(), e.getMessage(), e.getAdditionalData()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
     /**

@@ -9,8 +9,10 @@ import com.lumanlab.parentcaringservice.user.port.inp.UpdateUser;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.UpdateUserTotpViewReq;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.GetUserProfileViewRes;
 import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.LoginUserViewRes;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.VerifyUserTotpViewRes;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -59,5 +61,15 @@ public class UserApi {
         Long userId = userContext.getCurrentUserId().orElseThrow();
 
         updateUser.clearTotp(userId);
+    }
+
+    @PostMapping("/totp/verify")
+    public VerifyUserTotpViewRes verifyUserTotp(@RequestHeader("User-Agent") UserAgent userAgent,
+                                                @RequestBody VerifyUserTotpViewReq req, HttpServletRequest request) {
+        String ip = request.getRemoteAddr();
+
+        UserLoginDto dto = userAppService.verifyUserTotp(req.nonce(), req.verificationCode(), userAgent, ip);
+
+        return new VerifyUserTotpViewRes(dto);
     }
 }
