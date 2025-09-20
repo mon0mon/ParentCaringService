@@ -3,6 +3,12 @@ package com.lumanlab.parentcaringservice.user.application.service;
 import com.lumanlab.parentcaringservice.exception.MfaInitializationRequiredException;
 import com.lumanlab.parentcaringservice.exception.MfaVerificationFailedException;
 import com.lumanlab.parentcaringservice.exception.MfaVerificationRequiredException;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
+import com.lumanlab.parentcaringservice.oauth2.port.inp.QueryOAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.port.inp.UpdateOAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.port.outp.OAuth2Client;
+import com.lumanlab.parentcaringservice.oauth2.port.outp.UserProfileResponse;
 import com.lumanlab.parentcaringservice.refreshtoken.application.service.RefreshTokenService;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenDto;
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvider;
@@ -38,6 +44,9 @@ public class UserAppService {
     private final NonceService nonceService;
     private final TotpProvider totpProvider;
     private final TotpService totpService;
+    private final OAuth2Client oAuth2GoogleProfileClient;
+    private final QueryOAuth2Link queryOAuth2Link;
+    private final UpdateOAuth2Link updateOAuth2Link;
 
     public void registerUser(String email, String password, UserAgent userAgent) {
         String encodedPassword = passwordEncoder.encode(password);
@@ -98,6 +107,33 @@ public class UserAppService {
         return new UserLoginDto(accessToken, refreshTokenDto.token(), refreshTokenDto.expiredAt().toEpochSecond());
     }
 
+    public UserLoginDto oAuth2LoginUser(String oAuth2AccessToken, OAuth2Provider provider, UserAgent userAgent,
+                                        String ip) {
+        var profile = switch (provider) {
+            case GOOGLE -> oAuth2GoogleProfileClient.requestProfile(oAuth2AccessToken);
+            default -> throw new IllegalArgumentException("Invalid OAuth2 provider.");
+        };
+
+        OAuth2Link link = queryOAuth2Link.findByOAuth2IdOrThrow(profile.id());
+        User user = link.getUser();
+
+        // MFA 인증이 필요한 경우 nonce를 생성하여 예외와 함께 반환
+        if (user.getMfaEnabled()) {
+            String nonce = nonceService.generateNonce(user.getId());
+            throw new MfaVerificationRequiredException("MFA 인증이 필요합니다.", nonce);
+        }
+
+        // 액세스 토큰 발급
+        String accessToken = jwtTokenService.generateAccessToken(user.getId(), null);
+
+        // 리프레시 토큰 발급 및 저장 로직
+        RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
+        refreshTokenService.generate(user.getId(), refreshTokenDto.tokenHash(), ip, userAgent,
+                refreshTokenDto.issuedAt(), refreshTokenDto.expiredAt());
+
+        return new UserLoginDto(accessToken, refreshTokenDto.token(), refreshTokenDto.expiredAt().toEpochSecond());
+    }
+
     public GenerateTotpDto updateUserTotp(Long userId) {
         User user = queryUser.findById(userId);
 
@@ -127,5 +163,22 @@ public class UserAppService {
                 refreshTokenDto.issuedAt(), refreshTokenDto.expiredAt());
 
         return new UserLoginDto(accessToken, refreshTokenDto.token(), refreshTokenDto.expiredAt().toEpochSecond());
+    }
+
+    public void linkOAuth2(Long userId, OAuth2Provider provider, String oAuth2AccessToken) {
+        User user = queryUser.findById(userId);
+
+        UserProfileResponse profile = switch (provider) {
+            case GOOGLE -> oAuth2GoogleProfileClient.requestProfile(oAuth2AccessToken);
+            default -> throw new IllegalArgumentException("Invalid OAuth2 provider.");
+        };
+
+        updateOAuth2Link.register(user.getId(), provider, profile.id());
+    }
+
+    public void unlinkOAuth2(Long userId, OAuth2Provider provider) {
+        User user = queryUser.findById(userId);
+
+        updateOAuth2Link.delete(user.getId(), provider);
     }
 }

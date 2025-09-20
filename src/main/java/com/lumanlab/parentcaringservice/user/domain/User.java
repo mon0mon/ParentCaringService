@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.user.domain;
 
 import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /** 사용자 **/
@@ -196,6 +198,24 @@ public class User {
      */
     public void removeOAuth2Link(OAuth2Link oAuth2Link) {
         oAuth2Links.remove(oAuth2Link);
+    }
+
+    /**
+     * 지정된 OAuth2Provider를 바탕으로 OAuth2Link를 반환하는 메서드임
+     *
+     * @param provider OAuth2Provider, 찾으려는 OAuth2Link의 제공자임
+     * @return OAuth2Link, 제공된 OAuth2Provider와 연결된 OAuth2Link 객체임
+     * @throws NoSuchElementException 지정된 제공자와 일치하는 OAuth2Link가 없을 경우 발생함
+     */
+    public OAuth2Link getOAuth2Link(OAuth2Provider provider) {
+        return oAuth2Links.stream()
+                .filter(link -> link.getProvider() == provider)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    public boolean isActive() {
+        return status == UserStatus.ACTIVE;
     }
 
     /**

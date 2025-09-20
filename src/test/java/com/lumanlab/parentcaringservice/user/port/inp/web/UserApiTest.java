@@ -2,6 +2,11 @@ package com.lumanlab.parentcaringservice.user.port.inp.web;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.lumanlab.parentcaringservice.integration.google.OAuth2GoogleProfileClient;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
+import com.lumanlab.parentcaringservice.oauth2.port.outp.OAuth2LinkRepository;
+import com.lumanlab.parentcaringservice.oauth2.port.outp.UserProfileResponse;
 import com.lumanlab.parentcaringservice.support.BaseApiTest;
 import com.lumanlab.parentcaringservice.support.annotation.WithTestUser;
 import com.lumanlab.parentcaringservice.totp.application.service.NonceService;
@@ -9,15 +14,15 @@ import com.lumanlab.parentcaringservice.totp.application.service.TotpProvider;
 import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -35,8 +40,14 @@ class UserApiTest extends BaseApiTest {
     @Autowired
     private NonceService nonceService;
 
+    @Autowired
+    private OAuth2LinkRepository oAuth2LinkRepository;
+
     @MockitoSpyBean
     private TotpProvider totpProvider;
+
+    @MockitoBean
+    private OAuth2GoogleProfileClient oAuth2GoogleProfileClient;
 
     @Test
     @WithTestUser
@@ -250,6 +261,50 @@ class UserApiTest extends BaseApiTest {
     }
 
     @Test
+    @DisplayName("사용자 OAuth2 로그인")
+    void oAuth2LoginUser() throws Exception {
+        User user = authHelper.createUser("login@example.com", "password123", null, UserRole.PARENT);
+        OAuth2Link oAuth2Link = oAuth2LinkRepository.save(new OAuth2Link(user, OAuth2Provider.GOOGLE, "OAUTH2_ID"));
+        user.addOAuth2Link(oAuth2Link);
+
+        doReturn(new UserProfileResponse(OAuth2Provider.GOOGLE, "OAUTH2_ID", "user@example.com", "user", 300L))
+                .when(oAuth2GoogleProfileClient).requestProfile(any(String.class));
+
+        var req = new OAuth2LoginViewReq("OAUTH2_ACCESS_TOKEN", OAuth2Provider.GOOGLE);
+
+        mockMvc.perform(post("/api/users/login/oauth2")
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.accessToken").exists(),
+                        jsonPath("$.refreshToken").exists(),
+                        jsonPath("$.refreshTokenExpiredAt").exists()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-oauth2-user",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 OAuth2 로그인")
+                                .description("연동한 OAuth2로 사용자 인증을 진행하고 JWT 토큰을 발급받습니다")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("accessToken").description("OAuth2 제공자에게 받은 엑세스 토큰"),
+                                        fieldWithPath("provider").description("OAuth2 제공자")
+                                )
+                                .responseFields(
+                                        fieldWithPath("accessToken").description("액세스 토큰"),
+                                        fieldWithPath("refreshToken").description("리프레시 토큰"),
+                                        fieldWithPath("refreshTokenExpiredAt").description("리프레시 토큰 만료 시간")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
     @WithTestUser
     @DisplayName("사용자 TOTP 업데이트")
     void updateUserTotp() throws Exception {
@@ -395,6 +450,66 @@ class UserApiTest extends BaseApiTest {
                                         fieldWithPath("errorCode").description("에러 코드"),
                                         fieldWithPath("message").description("에러 메시지"),
                                         fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @WithTestUser
+    @DisplayName("사용자 OAuth2 연동")
+    void userLinkOAuth2() throws Exception {
+        doReturn(new UserProfileResponse(OAuth2Provider.GOOGLE, "OAUTH2_ID", "user@example.com", "user", 300L))
+                .when(oAuth2GoogleProfileClient).requestProfile(any(String.class));
+
+        var req = new LinkOAuth2ViewReq("OAUTH2_ACCESS_TOKEN");
+
+        mockMvc.perform(withAuth(post("/api/users/oauth2-link/{provider}", OAuth2Provider.GOOGLE.name()))
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req))
+                )
+                .andExpectAll(
+                        status().isOk()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("user-link-oauth2",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 OAuth2 연동")
+                                .description("사용자 OAuth2 제공자 연동")
+                                .pathParameters(
+                                        parameterWithName("provider").description("OAuth2 제공자")
+                                )
+                                .requestFields(
+                                        fieldWithPath("oAuth2AccessToken").description("외부 프로필을 조회할 OAuth2 액세스 토큰")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @WithTestUser
+    @DisplayName("사용자 OAuth2 연동 제거")
+    void userUnlinkOAuth2() throws Exception {
+        User user = getCurrentUser();
+        OAuth2Link oAuth2Link = oAuth2LinkRepository.save(new OAuth2Link(user, OAuth2Provider.GOOGLE, "OAUTH2_ID"));
+        user.addOAuth2Link(oAuth2Link);
+
+        mockMvc.perform(withAuth(delete("/api/users/oauth2-link/{provider}", OAuth2Provider.GOOGLE.name()))
+                        .header("User-Agent", UserAgent.MOBILE)
+                )
+                .andExpectAll(
+                        status().isOk()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("user-unlink-oauth2",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 OAuth2 연동 제거")
+                                .description("사용자 OAuth2 제공자 연동 제거")
+                                .pathParameters(
+                                        parameterWithName("provider").description("OAuth2 제공자")
                                 )
                                 .build()
                         )

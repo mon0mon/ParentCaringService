@@ -1,5 +1,6 @@
 package com.lumanlab.parentcaringservice.user.port.inp.web;
 
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
 import com.lumanlab.parentcaringservice.security.UserContext;
 import com.lumanlab.parentcaringservice.totp.application.service.dto.GenerateTotpDto;
 import com.lumanlab.parentcaringservice.user.application.service.UserAppService;
@@ -7,13 +8,8 @@ import com.lumanlab.parentcaringservice.user.application.service.dto.UserLoginDt
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.port.inp.QueryUser;
 import com.lumanlab.parentcaringservice.user.port.inp.UpdateUser;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.LoginUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.RegisterUserViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.VerifyUserTotpViewReq;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.GetUserProfileViewRes;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.LoginUserViewRes;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.UpdateUserTotpViewRes;
-import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.VerifyUserTotpViewRes;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.req.*;
+import com.lumanlab.parentcaringservice.user.port.inp.web.view.res.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +46,16 @@ public class UserApi {
         return new LoginUserViewRes(dto);
     }
 
+    @PostMapping("/login/oauth2")
+    public OAuth2LoginViewRes oAuth2LoginUser(@RequestHeader("User-Agent") UserAgent userAgent,
+                                              @RequestBody OAuth2LoginViewReq req, HttpServletRequest request) {
+        String ip = request.getRemoteAddr();
+
+        UserLoginDto dto = userAppService.oAuth2LoginUser(req.accessToken(), req.provider(), userAgent, ip);
+
+        return new OAuth2LoginViewRes(dto);
+    }
+
     @PostMapping("/totp")
     public UpdateUserTotpViewRes updateUserTotp() {
         Long userId = userContext.getCurrentUserId().orElseThrow();
@@ -74,5 +80,19 @@ public class UserApi {
         UserLoginDto dto = userAppService.verifyUserTotp(req.nonce(), req.verificationCode(), userAgent, ip);
 
         return new VerifyUserTotpViewRes(dto);
+    }
+
+    @PostMapping("/oauth2-link/{provider}")
+    public void linkOAuth2(@PathVariable("provider") OAuth2Provider provider, @RequestBody LinkOAuth2ViewReq req) {
+        Long userId = userContext.getCurrentUserId().orElseThrow();
+
+        userAppService.linkOAuth2(userId, provider, req.oAuth2AccessToken());
+    }
+
+    @DeleteMapping("/oauth2-link/{provider}")
+    public void unlinkOAuth2(@PathVariable("provider") OAuth2Provider provider) {
+        Long userId = userContext.getCurrentUserId().orElseThrow();
+
+        userAppService.unlinkOAuth2(userId, provider);
     }
 }

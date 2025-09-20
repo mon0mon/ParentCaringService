@@ -1,9 +1,12 @@
 package com.lumanlab.parentcaringservice.user.domain;
 
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
+import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -174,5 +177,23 @@ class UserTest {
         user = new User(EMAIL, PASSWORD, Set.of(UserRole.MASTER));
 
         assertThat(user.shouldInitializeMfa()).isTrue();
+    }
+
+    @Test
+    @DisplayName("유저 - OAuth2Provider로 연동된 OAuth2Link를 조회")
+    void testFindOAuth2LinkByProvider() {
+        user.addOAuth2Link(new OAuth2Link(user, OAuth2Provider.GOOGLE, "OAUTH2_ID"));
+
+        var actual = user.getOAuth2Link(OAuth2Provider.GOOGLE);
+
+        assertThat(actual).isNotNull();
+    }
+
+    @Test
+    @DisplayName("유저 - OAuth2Provider로 연동된 OAuth2Link를 조회 - 존재하지 않은 경우 예외 발생")
+    void testFindOAuth2LinkByProviderThrowException() {
+
+        assertThatThrownBy(() -> user.getOAuth2Link(OAuth2Provider.GOOGLE))
+                .isInstanceOf(NoSuchElementException.class);
     }
 }
