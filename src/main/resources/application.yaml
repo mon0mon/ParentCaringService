@@ -30,6 +30,12 @@ jwt:
     grace-period: 3600  # 키 그레이스 기간 (1시간, 초)
   issuer: parent-caring-service
 
+oauth2:
+  google:
+    profile:
+      url: https://www.googleapis.com
+      path: /oauth2/v1/userinfo
+
 #logging:
 #  level:
 #    org.hibernate.SQL: DEBUG

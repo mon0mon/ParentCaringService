@@ -24,6 +24,12 @@ jwt:
     max-keys: 5  # 최대 보관할 키 개수
   issuer: parent-caring-service
 
+oauth2:
+  google:
+    profile:
+      url: https://www.googleapis.com
+      path: /oauth2/v1/userinfo
+
 #logging:
 #  level:
 #    org.hibernate.SQL: DEBUG
