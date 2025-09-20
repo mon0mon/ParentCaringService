@@ -1,0 +1,8 @@
+### TOTP 생성 요청
+POST {{host}}/api/totp
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "nonce": "{{mfaNonce}}"
+}
