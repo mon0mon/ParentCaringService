@@ -60,7 +60,12 @@ public class UserAppService {
     public UserLoginDto loginUser(String email, String password, UserAgent userAgent, String ip) {
         User user = queryUser.findByEmail(email);
 
-        // TODO 추후 커스텀 예외로 처리할 것
+        // UserAgent와 UserRole이 일치하지 않는 경우 예외처리
+        if (!userAgent.isUserAccessible(user.getRoles())) {
+            throw new IllegalStateException("User role is not accessible.");
+        }
+
+        // 비밀번호 검증
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Invalid password.");
         }

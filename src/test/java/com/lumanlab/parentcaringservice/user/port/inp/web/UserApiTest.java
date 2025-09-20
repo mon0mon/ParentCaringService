@@ -212,6 +212,44 @@ class UserApiTest extends BaseApiTest {
     }
 
     @Test
+    @DisplayName("사용자 로그인 - 유저 역할과 일치하지 않는 UserAgent일 경우 예외 발생")
+    void loginUserNotMatchingUserRoleThrowException() throws Exception {
+        authHelper.createUserAndGetToken("login@example.com", "password123", "TOTP_SECRET", UserRole.MASTER);
+
+        var req = new LoginUserViewReq("login@example.com", "password123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().is4xxClientError()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-not-matching-user-role-throw-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 로그인 - 유저 역할과 일치하지 않은 UserAgent는 예외")
+                                .description(
+                                        "UserRole과 UserAgent(PARENT - MOBILE, ADMIN - PARTNER_ADMIN, MASTER - " +
+                                                "LUMANLAB_ADMIN)가 일치해야 함")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
     @WithTestUser
     @DisplayName("사용자 TOTP 업데이트")
     void updateUserTotp() throws Exception {
