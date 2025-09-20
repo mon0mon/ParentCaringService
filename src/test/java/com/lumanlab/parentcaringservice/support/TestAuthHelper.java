@@ -33,6 +33,13 @@ public class TestAuthHelper {
     }
 
     /**
+     * 주어진 사용자의 JWT 토큰 반환
+     */
+    public String getToken(User user) {
+        return jwtTokenService.generateAccessToken(user.getId(), null);
+    }
+
+    /**
      * 테스트용 사용자 생성 및 JWT 토큰 반환
      */
     public String createUserAndGetToken(String email, String password, String totpSecret, UserRole... roles) {

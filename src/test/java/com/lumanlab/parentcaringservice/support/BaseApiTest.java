@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lumanlab.parentcaringservice.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,7 @@ public abstract class BaseApiTest {
     @Autowired
     private FilterChainProxy springSecurityFilterChain;
 
+    private User currentUser;
     private String currentUserToken;
 
     @BeforeEach
@@ -63,6 +65,16 @@ public abstract class BaseApiTest {
     // 특정 토큰으로 인증 헤더 추가
     protected MockHttpServletRequestBuilder withAuth(MockHttpServletRequestBuilder request, String token) {
         return request.header("Authorization", "Bearer " + token);
+    }
+
+    // 현재 사용자 반환
+    protected User getCurrentUser() {
+        return currentUser;
+    }
+
+    // Extension에서 사용자를 설정하기 위한 메서드
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
     }
 
     // 현재 사용자 토큰 반환
