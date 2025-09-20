@@ -82,6 +82,11 @@ public class UserAppService {
             throw new MfaVerificationRequiredException("MFA 인증이 필요합니다.", nonce);
         }
 
+        // 유저 상태에 따라서 예외 발생
+        if (!user.isActive()) {
+            throw new IllegalStateException("User is not active.");
+        }
+
         // 액세스 토큰 발급
         String accessToken = jwtTokenService.generateAccessToken(user.getId(), null);
 

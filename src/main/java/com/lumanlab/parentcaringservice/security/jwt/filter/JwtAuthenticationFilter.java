@@ -2,6 +2,7 @@ package com.lumanlab.parentcaringservice.security.jwt.filter;
 
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
+import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -38,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenService jwtTokenService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -90,8 +92,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtTokenService.validateJwtToken(token);
 
             String userId = claims.getSubject();
+
             if (!StringUtils.hasText(userId)) {
                 log.debug("JWT 토큰에 사용자 ID가 없습니다");
+                return null;
+            }
+
+            if (!userRepository.existsById(Long.parseLong(userId))) {
+                log.debug("존재하지 않는 User ID 입니다");
                 return null;
             }
 
