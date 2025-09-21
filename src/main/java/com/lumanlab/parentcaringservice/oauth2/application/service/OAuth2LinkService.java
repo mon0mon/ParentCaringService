@@ -21,6 +21,11 @@ public class OAuth2LinkService implements QueryOAuth2Link, UpdateOAuth2Link {
 
 
     @Override
+    public OAuth2Link findByOAuth2Id(String oAuth2Id) {
+        return oAuth2LinkRepository.findByOAuth2Id(oAuth2Id).orElse(null);
+    }
+
+    @Override
     public OAuth2Link findByOAuth2IdOrThrow(String oAuth2Id) {
         return oAuth2LinkRepository.findByOAuth2Id(oAuth2Id).orElseThrow();
     }

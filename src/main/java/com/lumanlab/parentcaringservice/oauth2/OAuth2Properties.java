@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "oauth2")
 public class OAuth2Properties {
 
-    private GoogleProperties googleProperties = new GoogleProperties();
+    private GoogleProperties google;
 
     @Data
     public static class GoogleProperties {
-        private GoogleProfileProperties profile = new GoogleProfileProperties();
+        private GoogleProfileProperties profile;
     }
 
     @Data
