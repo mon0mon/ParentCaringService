@@ -236,7 +236,7 @@ public class User {
         }
 
         if (roles == null || roles.isEmpty()) {
-            throw new IllegalArgumentException("User role must not be null or empty");
+            throw new IllegalArgumentException("User roles must not be null or empty");
         }
     }
 

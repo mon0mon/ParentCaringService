@@ -71,7 +71,7 @@ public class UserAppService {
 
         // UserAgent와 UserRole이 일치하지 않는 경우 예외처리
         if (!userAgent.isUserAccessible(user.getRoles())) {
-            throw new IllegalStateException("User role is not accessible.");
+            throw new IllegalStateException("User roles is not accessible.");
         }
 
         // 비밀번호 검증

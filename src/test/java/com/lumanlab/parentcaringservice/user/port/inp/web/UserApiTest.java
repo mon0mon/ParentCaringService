@@ -60,7 +60,7 @@ class UserApiTest extends BaseApiTest {
                         jsonPath("$.userId").exists(),
                         jsonPath("$.email").value("test@example.com"),
                         jsonPath("$.status").value("ACTIVE"),
-                        jsonPath("$.role").isArray(),
+                        jsonPath("$.roles").isArray(),
                         jsonPath("$.mfaEnabled").isBoolean()
                 )
                 .andDo(MockMvcRestDocumentationWrapper.document("get-user-profile",
@@ -72,7 +72,7 @@ class UserApiTest extends BaseApiTest {
                                         fieldWithPath("userId").description("사용자 ID"),
                                         fieldWithPath("email").description("사용자 이메일"),
                                         fieldWithPath("status").description("사용자 상태"),
-                                        fieldWithPath("role").description("사용자 권한 목록"),
+                                        fieldWithPath("roles").description("사용자 권한 목록"),
                                         fieldWithPath("mfaEnabled").description("다단계 인증 활성화 여부")
                                 )
                                 .build()
@@ -236,7 +236,7 @@ class UserApiTest extends BaseApiTest {
                 .andExpectAll(
                         status().is4xxClientError()
                 )
-                .andDo(MockMvcRestDocumentationWrapper.document("login-user-not-matching-user-role-throw-exception",
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-not-matching-user-roles-throw-exception",
                         resource(ResourceSnippetParameters.builder()
                                 .tag("User")
                                 .summary("사용자 로그인 - 유저 역할과 일치하지 않은 UserAgent는 예외")
