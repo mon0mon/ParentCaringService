@@ -16,13 +16,15 @@ public class OAuth2GoogleProfileClient implements OAuth2Client {
 
     @Override
     public UserProfileResponse requestProfile(String authorization) {
-        String baseUrl = oAuth2Properties.getGoogleProperties().getProfile().getUrl();
-        String path = oAuth2Properties.getGoogleProperties().getProfile().getPath();
+        String baseUrl = oAuth2Properties.getGoogle().getProfile().getUrl();
+        String path = oAuth2Properties.getGoogle().getProfile().getPath();
         String url = baseUrl + path;
+
+        String bearerAuthorization = "Bearer " + authorization;
 
         GoogleProfileResponse response = restClient.get()
                 .uri(url)
-                .header("Authorization", authorization)
+                .header("Authorization", bearerAuthorization)
                 .retrieve()
                 .toEntity(GoogleProfileResponse.class)
                 .getBody();

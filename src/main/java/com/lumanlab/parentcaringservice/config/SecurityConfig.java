@@ -11,7 +11,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -26,6 +29,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthenticationSuccessHandler oAuth2SuccessHandler;
+    private final AuthenticationFailureHandler oAuth2FailureHandler;
+    private final OAuth2AuthorizedClientService jdbcOAuth2AuthorizedClientService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,7 +46,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html")
                         .permitAll()
                         // 정적 리소스
-                        .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**")
+                        .requestMatchers("/static/**", "/css/**", "/js/**", "/img/**", "/oauth2.html",
+                                "/oauth2-response.html")
+                        .permitAll()
+                        // OAuth2
+                        .requestMatchers("/oauth2/authorization/**", "/oauth2/code/**")
                         .permitAll()
                         // JWK 키 조회
                         .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json")
@@ -54,7 +64,13 @@ public class SecurityConfig {
                         .permitAll() // CORS preflight 요청 허용
                         // 나머지는 인증 필요
                         .anyRequest()
-                        .authenticated());
+                        .authenticated())
+                .oauth2Login(oauth2 ->
+                        oauth2.successHandler(oAuth2SuccessHandler)
+                                .failureHandler(oAuth2FailureHandler)
+                                .authorizedClientService(jdbcOAuth2AuthorizedClientService)
+                )
+        ;
 
         return http.build();
     }
