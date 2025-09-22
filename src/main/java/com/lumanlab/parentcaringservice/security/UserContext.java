@@ -1,5 +1,6 @@
 package com.lumanlab.parentcaringservice.security;
 
+import com.lumanlab.parentcaringservice.security.domain.UserPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,9 @@ public class UserContext {
         if (authentication != null && authentication.isAuthenticated() &&
                 StringUtils.hasText(authentication.getName()) && !"anonymousUser".equals(authentication.getName())) {
 
-            return Optional.of(Long.parseLong(authentication.getName()));
+            UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+            return Optional.of(principal.id());
         }
 
         return Optional.empty();

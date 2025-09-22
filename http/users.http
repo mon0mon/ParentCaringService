@@ -87,8 +87,26 @@ User-Agent: {{userAgent}}
 
 {
   "nonce": "{{mfaNonce}}",
-  "verificationCode": ""
+  "verificationCode": "387849"
 }
+
+> {%
+    if (response.status == 200) {
+        if (response.body && response.body != "") {
+            client.log("accessToken : " + response.body.accessToken);
+            client.log("refreshToken : " + response.body.refreshToken);
+            client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+            client.global.set("accessToken", response.body.accessToken);
+            client.global.set("refreshToken", response.body.refreshToken);
+        }
+    }
+
+    if (response.status == 428) {
+        if (response.body && response.body != "") {
+            client.global.set("mfaNonce", response.body.additionalData.nonce);
+        }
+    }
+%}
 
 ### 유저 OAuth2 연동 (GOOGLE)
 POST {{host}}/api/users/oauth2-link/GOOGLE

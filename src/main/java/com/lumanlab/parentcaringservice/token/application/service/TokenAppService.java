@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -29,10 +31,11 @@ public class TokenAppService {
         User user = queryUser.findById(userId);
 
         // 신규 accessToken 생성
-        String accessToken = jwtTokenService.generateAccessToken(userId, null);
+        String accessToken = jwtTokenService.generateAccessToken(userId, Map.of("roles", user.getRolesString()));
 
         // 신규 refreshToken 생성
-        RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
+        RefreshTokenDto refreshTokenDto =
+                refreshTokenProvider.generateRefreshToken(user.getId(), Map.of("roles", user.getRolesString()));
         updateRefreshToken.rotate(user.getId(), refreshToken, refreshTokenDto.tokenHash(), ip, userAgent,
                 refreshTokenDto.issuedAt(), refreshTokenDto.expiredAt());
 

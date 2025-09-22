@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -36,7 +37,7 @@ public class TestAuthHelper {
      * 주어진 사용자의 JWT 토큰 반환
      */
     public String getToken(User user) {
-        return jwtTokenService.generateAccessToken(user.getId(), null);
+        return jwtTokenService.generateAccessToken(user.getId(), Map.of("roles", user.getRolesString()));
     }
 
     /**
@@ -46,7 +47,7 @@ public class TestAuthHelper {
         User savedUser =
                 userRepository.save(new User(email, passwordEncoder.encode(password), Set.of(roles), totpSecret));
 
-        return jwtTokenService.generateAccessToken(savedUser.getId(), null);
+        return jwtTokenService.generateAccessToken(savedUser.getId(), Map.of("roles", savedUser.getRolesString()));
     }
 
     /**

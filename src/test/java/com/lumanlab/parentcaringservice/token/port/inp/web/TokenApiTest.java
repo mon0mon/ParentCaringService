@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
@@ -47,7 +48,8 @@ class TokenApiTest extends BaseApiTest {
         User user = authHelper.createUser(userEmail, password, null, UserRole.PARENT);
 
         // 테스트용 리프레시 토큰 생성
-        RefreshTokenDto refreshTokenDto = refreshTokenProvider.generateRefreshToken(user.getId(), null);
+        RefreshTokenDto refreshTokenDto =
+                refreshTokenProvider.generateRefreshToken(user.getId(), Map.of("role", user.getRolesString()));
         refreshTokenRepository.save(
                 new RefreshToken(user, refreshTokenDto.tokenHash(), "IP", USER_AGENT, OffsetDateTime.now(),
                         OffsetDateTime.now().plusDays(1)));

@@ -46,11 +46,21 @@ oauth2:
       url: https://www.googleapis.com
       path: /oauth2/v1/userinfo
 
-  #logging:
-  #  level:
-  #    org.hibernate.SQL: DEBUG
-  #    org.hibernate.orm.jdbc.bind: TRACE
-  #    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+logging:
+  level:
+    root: info
+    #    org.springframework:
+    #      web: info
+    #      security: trace
+    #    org.hibernate:
+    #      SQL: debug
+    #      orm:
+    #        jdbc:
+    #          bind: trace
+    #      type:
+    #        descriptor:
+    #          sql:
+    #            BasicBinder: trace
 #    com.lumanlab.parentcaringservice:
 #      logger: trace
 

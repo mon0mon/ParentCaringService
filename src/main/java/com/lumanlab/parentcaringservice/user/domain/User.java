@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** 사용자 **/
 @Entity(name = "users")
@@ -214,8 +215,29 @@ public class User {
                 .orElseThrow();
     }
 
+    /**
+     * 사용자 상태가 ACTIVE 인지 확인하는 메서드
+     *
+     * @return true면 사용자 상태가 ACTIVE, false면 그렇지 않음
+     */
     public boolean isActive() {
         return status == UserStatus.ACTIVE;
+    }
+
+    /**
+     * 사용자의 역할(Role)을 문자열 형태로 반환하는 메서드
+     * 역할이 없을 경우 빈 배열 문자열을 반환함
+     *
+     * @return 사용자의 역할을 콤마로 구분한 문자열이나 빈 배열 문자열 반환
+     */
+    public String getRolesString() {
+        if (roles == null || roles.isEmpty()) {
+            return "[]";
+        }
+
+        return roles.stream()
+                .map(Enum::name)
+                .collect(Collectors.joining(", ", "[", "]"));
     }
 
     /**

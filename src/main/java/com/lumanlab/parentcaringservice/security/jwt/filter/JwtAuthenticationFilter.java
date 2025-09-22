@@ -1,5 +1,6 @@
 package com.lumanlab.parentcaringservice.security.jwt.filter;
 
+import com.lumanlab.parentcaringservice.security.domain.UserPrincipal;
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
 import com.lumanlab.parentcaringservice.user.port.outp.UserRepository;
@@ -20,9 +21,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * JWT 인증 필터
@@ -90,23 +90,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private Authentication authenticateToken(String token) {
         try {
             Claims claims = jwtTokenService.validateJwtToken(token);
+            String userIdStr = claims.getSubject();
 
-            String userId = claims.getSubject();
-
-            if (!StringUtils.hasText(userId)) {
+            if (!StringUtils.hasText(userIdStr)) {
                 log.debug("JWT 토큰에 사용자 ID가 없습니다");
                 return null;
             }
 
-            if (!userRepository.existsById(Long.parseLong(userId))) {
+            Long userId = Long.parseLong(userIdStr);
+            if (!userRepository.existsById(userId)) {
                 log.debug("존재하지 않는 User ID 입니다");
                 return null;
             }
 
-            Collection<SimpleGrantedAuthority> authorities = extractAuthorities(claims);
+            // JWT에서 UserRole Set을 추출
+            Set<UserRole> userRoles = extractUserRoles(claims);
 
-            // 사용자 ID와 권한 정보로 Authentication 객체 생성
-            return new UsernamePasswordAuthenticationToken(userId, null, authorities);
+            // UserPrincipal 객체를 생성
+            UserPrincipal principal = new UserPrincipal(userId, userRoles);
+
+            // UserRole Set을 기반으로 GrantedAuthority 컬렉션을 생성
+            Collection<SimpleGrantedAuthority> authorities = createAuthoritiesFromRoles(userRoles);
+
+            // 생성된 principal과 authorities로 Authentication 객체를 생성
+            return new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
         } catch (JwtException e) {
             log.debug("JWT 토큰 검증 실패: {}", e.getMessage());
@@ -115,34 +122,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * JWT 클레임에서 사용자 권한 정보를 추출
+     * JWT 클레임에서 사용자의 역할 정보를 추출하여 UserRole 셋을 반환함
      *
-     * @param claims JWT 클레임 정보
-     * @return 사용자 권한 목록
+     * @param claims JWT 클레임을 포함하는 객체
+     * @return 추출된 UserRole 셋, 역할 정보가 없으면 기본 역할(PARENT)을 포함한 셋 반환
      */
-    private Collection<SimpleGrantedAuthority> extractAuthorities(Claims claims) {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+    private Set<UserRole> extractUserRoles(Claims claims) {
+        String rolesString = sanitizeRolesString((String) claims.get("roles"));
 
-        // JWT 클레임에서 roles 정보 추출
-        Object rolesObj = claims.get("roles");
-        if (rolesObj instanceof List<?> rolesList) {
-            for (Object roleObj : rolesList) {
-                if (roleObj instanceof String roleStr) {
+        if (!StringUtils.hasText(rolesString)) {
+            // 역할 정보가 없으면 기본 역할(PARENT) 부여
+            return Set.of(UserRole.PARENT);
+        }
+
+        return Arrays.stream(rolesString.split(","))
+                .map(String::trim)
+                .map(roleName -> {
                     try {
-                        UserRole userRole = UserRole.valueOf(roleStr);
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole.name()));
+                        return UserRole.valueOf(roleName);
                     } catch (IllegalArgumentException e) {
-                        log.warn("유효하지 않은 사용자 역할: {}", roleStr);
+                        log.warn("유효하지 않은 사용자 역할: {}", roleName);
+                        return null;
                     }
-                }
-            }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 유저 역할(Role) 셋을 기반으로 Spring Security에서 사용하는 권한(Authority) 정보 컬렉션을 생성합니다
+     *
+     * @param roles 유저 역할을 나타내는 UserRole 객체의 셋
+     * @return 생성된 SimpleGrantedAuthority 컬렉션. 역할 셋이 없거나 null 일 경우 기본 역할(ROLE_PARENT)을 포함한 컬렉션 반환
+     */
+    private Collection<SimpleGrantedAuthority> createAuthoritiesFromRoles(Set<UserRole> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return List.of(new SimpleGrantedAuthority("ROLE_PARENT"));
         }
 
-        // 기본 권한이 없는 경우 기본 사용자 권한 부여
-        if (authorities.isEmpty()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                .collect(Collectors.toList());
+    }
 
-        return authorities;
+    private String sanitizeRolesString(String roles) {
+        return roles.replaceAll("[\\[\\]]", "");
     }
 }
