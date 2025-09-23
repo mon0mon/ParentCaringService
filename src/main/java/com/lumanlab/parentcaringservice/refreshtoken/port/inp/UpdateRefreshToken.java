@@ -11,5 +11,5 @@ public interface UpdateRefreshToken {
     void rotate(Long userId, String oldToken, String renewedTokenHash, String ip, UserAgent userAgent,
                 OffsetDateTime issuedAt, OffsetDateTime expiredAt);
 
-    void revoke(Long userId, String token);
+    void revoke(Long userId, Long tokenId);
 }

@@ -66,7 +66,7 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
         updateRefreshToken.generate(user.getId(), TOKEN_HASH, IP, USER_AGENT, OffsetDateTime.now(),
                 OffsetDateTime.now().plusDays(1));
 
-        RefreshToken actual = refreshTokenRepository.findByUser(user).stream().findFirst().orElse(null);
+        RefreshToken actual = refreshTokenRepository.findAllByUser(user).stream().findFirst().orElse(null);
 
         assertThat(actual).isNotNull();
         assertThat(refreshTokenEncoder.matches(TOKEN, actual.getTokenHash())).isTrue();
@@ -96,7 +96,7 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
 
         updateRefreshToken.rotate(user.getId(), TOKEN, tokenHash, IP, USER_AGENT, issuedAt, expiredAt);
 
-        var actual = refreshTokenRepository.findByUser(user);
+        var actual = refreshTokenRepository.findAllByUser(user);
         var actualActiveToken = actual.stream()
                 .filter(token -> token.getStatus() == RefreshTokenStatus.ACTIVE)
                 .findFirst()
@@ -136,9 +136,9 @@ class UpdateRefreshTokenTest extends BaseUsecaseTest {
     @Test
     @DisplayName("리프레시 토큰 - 취소")
     void revokeRefreshToken() {
-        updateRefreshToken.revoke(user.getId(), TOKEN);
+        updateRefreshToken.revoke(user.getId(), refreshToken.getId());
 
-        var actual = refreshTokenRepository.findByUser(user);
+        var actual = refreshTokenRepository.findAllByUser(user);
         var actualExpiredToken = actual.stream()
                 .filter(token -> token.getStatus() == RefreshTokenStatus.EXPIRED)
                 .findFirst()

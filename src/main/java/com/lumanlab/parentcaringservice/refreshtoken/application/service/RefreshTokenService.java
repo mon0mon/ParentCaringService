@@ -30,14 +30,14 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     public List<RefreshToken> findByUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        return refreshTokenRepository.findByUser(user);
+        return refreshTokenRepository.findAllByUser(user);
     }
 
     @Override
     public RefreshToken findByUserAndToken(Long userId, String token) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        List<RefreshToken> activeTokens = refreshTokenRepository.findByUser(user)
+        List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUser(user)
                 .stream()
                 .filter(item -> item.getStatus().equals(RefreshTokenStatus.ACTIVE))
                 .toList();
@@ -56,7 +56,7 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
 
         // 주어진 상태가 없을 경우 전체 조회
         if (status == null) {
-            return refreshTokenRepository.findByUser(user);
+            return refreshTokenRepository.findAllByUser(user);
         }
 
         // 주어진 상태에 따라 개별 조회 쿼리 실행
@@ -89,12 +89,12 @@ public class RefreshTokenService implements QueryRefreshToken, UpdateRefreshToke
     }
 
     @Override
-    public void revoke(Long userId, String token) {
-        RefreshToken refreshToken = findByUserAndToken(userId, token);
+    public void revoke(Long userId, Long tokenId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        RefreshToken refreshToken = refreshTokenRepository.findById(tokenId).orElseThrow();
 
-        if (refreshToken == null) {
-            throw new NoSuchElementException("Refresh token is not found.");
-        }
+        // 요청한 유저와 리프레시 토큰 소유주가 같은 지 확인
+        refreshToken.checkUser(user);
 
         refreshToken.revoke();
     }

@@ -130,6 +130,19 @@ public class RefreshToken {
     }
 
     /**
+     * 주어진 사용자가 현재 RefreshToken의 사용자와 일치하는지 확인하는 메서드
+     * 사용자가 일치하지 않을 경우 IllegalArgumentException을 발생시킴
+     *
+     * @param user 확인할 대상 User 객체
+     * @throws IllegalArgumentException 사용자가 일치하지 않을 경우 발생
+     */
+    public void checkUser(User user) {
+        if (!this.user.equals(user)) {
+            throw new IllegalArgumentException("User is not matched");
+        }
+    }
+
+    /**
      * RefreshToken 데이터의 유효성을 검증하는 메서드
      * <p>
      * 이 메서드는 RefreshToken에 포함된 필수 데이터(user, tokenHash, issuedAt, expiredAt)의
