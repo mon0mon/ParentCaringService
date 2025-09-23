@@ -26,7 +26,7 @@ public class UserApi {
 
     @GetMapping("/profile")
     public GetUserProfileViewRes getUserProfile() {
-        Long userId = userContext.getCurrentUserId().orElseThrow();
+        Long userId = userContext.getCurrentUserIdOrThrow();
 
         return new GetUserProfileViewRes(queryUser.findById(userId));
     }
@@ -58,7 +58,7 @@ public class UserApi {
 
     @PostMapping("/totp")
     public UpdateUserTotpViewRes updateUserTotp() {
-        Long userId = userContext.getCurrentUserId().orElseThrow();
+        Long userId = userContext.getCurrentUserIdOrThrow();
 
         GenerateTotpDto dto = userAppService.updateUserTotp(userId);
 
@@ -67,7 +67,7 @@ public class UserApi {
 
     @DeleteMapping("/totp")
     public void clearUserTotp() {
-        Long userId = userContext.getCurrentUserId().orElseThrow();
+        Long userId = userContext.getCurrentUserIdOrThrow();
 
         updateUser.clearTotp(userId);
     }
@@ -84,14 +84,14 @@ public class UserApi {
 
     @PostMapping("/oauth2-link/{provider}")
     public void linkOAuth2(@PathVariable("provider") OAuth2Provider provider, @RequestBody LinkOAuth2ViewReq req) {
-        Long userId = userContext.getCurrentUserId().orElseThrow();
+        Long userId = userContext.getCurrentUserIdOrThrow();
 
         userAppService.linkOAuth2(userId, provider, req.oAuth2AccessToken());
     }
 
     @DeleteMapping("/oauth2-link/{provider}")
     public void unlinkOAuth2(@PathVariable("provider") OAuth2Provider provider) {
-        Long userId = userContext.getCurrentUserId().orElseThrow();
+        Long userId = userContext.getCurrentUserIdOrThrow();
 
         userAppService.unlinkOAuth2(userId, provider);
     }

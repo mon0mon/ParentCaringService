@@ -8,7 +8,6 @@ import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,7 +23,7 @@ public class AdminApi {
     public ImpersonateUserViewRes impersonateUser(@RequestHeader("User-Agent") UserAgent userAgent,
                                                   @PathVariable Long impersonateUserId, HttpServletRequest request) {
         String ip = request.getRemoteAddr();
-        Long adminUserId = userContext.getCurrentUserId().orElseThrow();
+        Long adminUserId = userContext.getCurrentUserIdOrThrow();
 
         UserLoginDto dto = adminAppService.impersonateUser(adminUserId, impersonateUserId, ip, userAgent);
 

@@ -34,6 +34,16 @@ public class UserContext {
     }
 
     /**
+     * 현재 인증된 사용자의 ID를 반환하거나 인증된 사용자가 없는 경우 예외를 던지는 메서드
+     *
+     * @return 현재 인증된 사용자의 ID
+     * 인증된 사용자가 없거나 인증 정보가 유효하지 않으면 예외를 던짐
+     */
+    public Long getCurrentUserIdOrThrow() {
+        return getCurrentUserId().orElseThrow();
+    }
+
+    /**
      * 현재 사용자가 인증되었는지 확인하는 메서드
      * <p>
      * 인증된 사용자가 있는 경우 true를 반환하고, 없는 경우 false를 반환
