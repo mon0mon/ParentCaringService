@@ -1,8 +1,6 @@
 package com.lumanlab.parentcaringservice.user.application.service;
 
-import com.lumanlab.parentcaringservice.exception.MfaInitializationRequiredException;
-import com.lumanlab.parentcaringservice.exception.MfaVerificationFailedException;
-import com.lumanlab.parentcaringservice.exception.MfaVerificationRequiredException;
+import com.lumanlab.parentcaringservice.exception.*;
 import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Link;
 import com.lumanlab.parentcaringservice.oauth2.domain.OAuth2Provider;
 import com.lumanlab.parentcaringservice.oauth2.port.inp.QueryOAuth2Link;
@@ -72,12 +70,14 @@ public class UserAppService {
 
         // UserAgent와 UserRole이 일치하지 않는 경우 예외처리
         if (!userAgent.isUserAccessible(user.getRoles())) {
-            throw new IllegalStateException("User roles is not accessible.");
+            throw new LoginUserRoleNotMatchWithUserAgentException(
+                    "USER_ROLE_NOT_MATCH_WITH_USER_AGENT", "User roles is not accessible."
+            );
         }
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid password.");
+            throw new LoginUserAuthorizationFailedException("USER_AUTHORIZATION_FAILED", "Invalid password.");
         }
 
         // MFA 초기화가 필요한 경우 nonce를 생성하여 예외와 함께 반환
@@ -94,7 +94,7 @@ public class UserAppService {
 
         // 유저 상태에 따라서 예외 발생
         if (!user.isActive()) {
-            throw new IllegalStateException("User is not active.");
+            throw new LoginUserStatusNotActiveException("USER_STATUS_NOT_ACTIVE", "User is not active.");
         }
 
         // 액세스 토큰 발급
@@ -123,6 +123,11 @@ public class UserAppService {
         if (user.getMfaEnabled()) {
             String nonce = nonceService.generateNonce(user.getId());
             throw new MfaVerificationRequiredException("MFA 인증이 필요합니다.", nonce);
+        }
+
+        // 유저 상태에 따라서 예외 발생
+        if (!user.isActive()) {
+            throw new LoginUserStatusNotActiveException("USER_STATUS_NOT_ACTIVE", "User is not active.");
         }
 
         // 액세스 토큰 발급

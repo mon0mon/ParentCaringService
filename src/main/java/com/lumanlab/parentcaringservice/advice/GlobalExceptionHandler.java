@@ -1,9 +1,6 @@
 package com.lumanlab.parentcaringservice.advice;
 
-import com.lumanlab.parentcaringservice.exception.MfaInitializationRequiredException;
-import com.lumanlab.parentcaringservice.exception.MfaVerificationFailedException;
-import com.lumanlab.parentcaringservice.exception.MfaVerificationRequiredException;
-import com.lumanlab.parentcaringservice.exception.ServiceException;
+import com.lumanlab.parentcaringservice.exception.*;
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -106,6 +103,49 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+
+    /**
+     * LoginUserAuthorizationFailedException 처리
+     */
+    @ExceptionHandler(LoginUserAuthorizationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleLoginUserAuthorizationFailedException(
+            LoginUserAuthorizationFailedException e
+    ) {
+        log.warn("User authorization failed: {} - {}", e.getErrorCode(), e.getMessage(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * LoginUserAuthorizationFailedException 처리
+     */
+    @ExceptionHandler(LoginUserRoleNotMatchWithUserAgentException.class)
+    public ResponseEntity<ErrorResponse> handleLoginUserRoleNotMatchWithUserAgentException(
+            LoginUserRoleNotMatchWithUserAgentException e
+    ) {
+        log.warn("User agent and user role are not match: {} - {}", e.getErrorCode(), e.getMessage(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * LoginUserAuthorizationFailedException 처리
+     */
+    @ExceptionHandler(LoginUserStatusNotActiveException.class)
+    public ResponseEntity<ErrorResponse> handleLoginUserStatusNotActiveException(
+            LoginUserStatusNotActiveException e
+    ) {
+        log.warn("User status not active: {} - {}", e.getErrorCode(), e.getMessage(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     /**

@@ -225,7 +225,7 @@ class UserApiTest extends BaseApiTest {
     @Test
     @DisplayName("사용자 로그인 - 유저 역할과 일치하지 않는 UserAgent일 경우 예외 발생")
     void loginUserNotMatchingUserRoleThrowException() throws Exception {
-        authHelper.createUserAndGetToken("login@example.com", "password123", "TOTP_SECRET", UserRole.MASTER);
+        authHelper.createUserAndGetToken("login@example.com", "password123", null, UserRole.MASTER);
 
         var req = new LoginUserViewReq("login@example.com", "password123");
 
@@ -243,6 +243,81 @@ class UserApiTest extends BaseApiTest {
                                 .description(
                                         "UserRole과 UserAgent(PARENT - MOBILE, ADMIN - PARTNER_ADMIN, MASTER - " +
                                                 "LUMANLAB_ADMIN)가 일치해야 함")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 로그인 - 유저 역할과 일치하지 않는 UserAgent일 경우 예외 발생")
+    void loginUserAuthorizationFailedThrowException() throws Exception {
+        authHelper.createUserAndGetToken("login@example.com", "password123", null, UserRole.MASTER);
+
+        var req = new LoginUserViewReq("login@example.com", "1234");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().is4xxClientError()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-authorization-failed-throw-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 로그인 - 유저 인증에 실패한 경우 예외 발생")
+                                .description(
+                                        "잘못된 비밀번호 또는 이메일로 로그인 시도")
+                                .requestHeaders(
+                                        headerWithName("User-Agent").description("사용자 에이전트 정보")
+                                )
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("errorCode").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("timestamp").description("에러 발생 시각 (UTC 기준 시간)")
+                                )
+                                .build()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("사용자 로그인 - 이미 삭제된 유저의 경우 예외 처리")
+    void loginUserUserStatusNotActiveException() throws Exception {
+        User user = authHelper.createUser("login@example.com", "password123", null, UserRole.MASTER);
+        user.withdraw();
+
+        var req = new LoginUserViewReq("login@example.com", "password123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("User-Agent", UserAgent.MOBILE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpectAll(
+                        status().is4xxClientError()
+                )
+                .andDo(MockMvcRestDocumentationWrapper.document("login-user-user-status-not-active-exception",
+                        resource(ResourceSnippetParameters.builder()
+                                .tag("User")
+                                .summary("사용자 로그인 - 활성 상태가 아닌 유저로 로그인 시도 시 예외 발생")
+                                .description(
+                                        "활성 상태가 아닌 유저로 로그인 시도 시 예외 발생")
                                 .requestHeaders(
                                         headerWithName("User-Agent").description("사용자 에이전트 정보")
                                 )
