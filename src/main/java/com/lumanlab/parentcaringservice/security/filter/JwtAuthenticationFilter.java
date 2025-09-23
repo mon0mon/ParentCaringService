@@ -1,5 +1,8 @@
-package com.lumanlab.parentcaringservice.security.jwt.filter;
+package com.lumanlab.parentcaringservice.security.filter;
 
+import com.lumanlab.parentcaringservice.impersonationlog.domain.ImpersonationType;
+import com.lumanlab.parentcaringservice.impersonationlog.port.inp.UpdateImpersonationLog;
+import com.lumanlab.parentcaringservice.security.ActionDetailsExtractor;
 import com.lumanlab.parentcaringservice.security.domain.UserPrincipal;
 import com.lumanlab.parentcaringservice.security.jwt.application.service.JwtTokenService;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
@@ -40,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenService jwtTokenService;
     private final UserRepository userRepository;
+    private final UpdateImpersonationLog updateImpersonationLog;
+    private final ActionDetailsExtractor actionDetailsExtractor;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -49,8 +54,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null) {
                 Authentication authentication = authenticateToken(token);
+
+                // 인증 객체가 존재하는 경우
                 if (authentication != null) {
+                    // Spring Security Context에 저장
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+                    // 어드민 임퍼소네이션인 경우, 저장
+                    if (principal.isImpersonation()) {
+                        String ip = request.getRemoteAddr();
+                        String actionDetails = actionDetailsExtractor.extractActionDetails(request);
+
+                        updateImpersonationLog.register(
+                                principal.impersonatorId(), principal.id(), ip, ImpersonationType.ACTION, actionDetails
+                        );
+                    }
+
                     log.debug("JWT 토큰 인증 성공: {}", authentication.getName());
                 }
             }
@@ -94,27 +115,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (!StringUtils.hasText(userIdStr)) {
                 log.debug("JWT 토큰에 사용자 ID가 없습니다");
+
                 return null;
             }
 
             Long userId = Long.parseLong(userIdStr);
             if (!userRepository.existsById(userId)) {
                 log.debug("존재하지 않는 User ID 입니다");
+
                 return null;
             }
 
             // JWT에서 UserRole Set을 추출
             Set<UserRole> userRoles = extractUserRoles(claims);
 
+            // JWT에서 ImpersonatorId를 추출
+            Long impersonatorId = claims.get("impersonatorId") == null ? null : ((Number) claims.get("impersonatorId")).longValue();
+
             // UserPrincipal 객체를 생성
-            UserPrincipal principal = new UserPrincipal(userId, userRoles);
+            UserPrincipal principal = new UserPrincipal(userId, userRoles, impersonatorId);
 
             // UserRole Set을 기반으로 GrantedAuthority 컬렉션을 생성
             Collection<SimpleGrantedAuthority> authorities = createAuthoritiesFromRoles(userRoles);
 
             // 생성된 principal과 authorities로 Authentication 객체를 생성
             return new UsernamePasswordAuthenticationToken(principal, null, authorities);
-
         } catch (JwtException e) {
             log.debug("JWT 토큰 검증 실패: {}", e.getMessage());
             throw e;

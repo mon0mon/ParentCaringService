@@ -87,7 +87,7 @@ User-Agent: {{userAgent}}
 
 {
   "nonce": "{{mfaNonce}}",
-  "verificationCode": "387849"
+  "verificationCode": ""
 }
 
 > {%

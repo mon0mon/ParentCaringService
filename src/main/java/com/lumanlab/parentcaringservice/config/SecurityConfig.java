@@ -1,6 +1,7 @@
 package com.lumanlab.parentcaringservice.config;
 
-import com.lumanlab.parentcaringservice.security.jwt.filter.JwtAuthenticationFilter;
+import com.lumanlab.parentcaringservice.security.filter.JwtAuthenticationFilter;
+import com.lumanlab.parentcaringservice.security.filter.RequestCachingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RequestCachingFilter requestCachingFilter;
     private final AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final AuthenticationFailureHandler oAuth2FailureHandler;
     private final OAuth2AuthorizedClientService jdbcOAuth2AuthorizedClientService;
@@ -45,6 +47,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestCachingFilter, JwtAuthenticationFilter.class)
                 //  인증되지 않은 요청 시, 로그인 페이지 리다이렉트 대신 403 에러 응답
                 .exceptionHandling(exceptions ->
                         exceptions.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.FORBIDDEN))
@@ -72,7 +75,8 @@ public class SecurityConfig {
                         .permitAll() // CORS preflight 요청 허용
                         // 나머지는 인증 필요
                         .anyRequest()
-                        .authenticated())
+                        .authenticated()
+                )
                 .oauth2Login(oauth2 ->
                         oauth2.successHandler(oAuth2SuccessHandler)
                                 .failureHandler(oAuth2FailureHandler)

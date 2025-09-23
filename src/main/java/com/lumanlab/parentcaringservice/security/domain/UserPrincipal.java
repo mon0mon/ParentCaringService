@@ -4,5 +4,9 @@ import com.lumanlab.parentcaringservice.user.domain.UserRole;
 
 import java.util.Set;
 
-public record UserPrincipal(Long id, Set<UserRole> roles) {
+public record UserPrincipal(Long id, Set<UserRole> roles, Long impersonatorId) {
+
+    public boolean isImpersonation() {
+        return impersonatorId != null;
+    }
 }
