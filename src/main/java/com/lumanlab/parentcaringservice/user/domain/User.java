@@ -240,6 +240,12 @@ public class User {
                 .collect(Collectors.joining(", ", "[", "]"));
     }
 
+    public UserRole getHighestRole() {
+        return roles.stream()
+                .max(UserRole::compareTo)
+                .orElseThrow();
+    }
+
     /**
      * 사용자 데이터를 검증.
      *
