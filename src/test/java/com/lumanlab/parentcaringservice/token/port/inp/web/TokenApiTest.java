@@ -8,7 +8,7 @@ import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenProvi
 import com.lumanlab.parentcaringservice.refreshtoken.port.outp.RefreshTokenRepository;
 import com.lumanlab.parentcaringservice.support.BaseApiTest;
 import com.lumanlab.parentcaringservice.support.annotation.WithTestUser;
-import com.lumanlab.parentcaringservice.token.port.inp.web.view.req.RefreshAccessTokenViewReq;
+import com.lumanlab.parentcaringservice.token.adapter.in.web.view.req.RefreshAccessTokenViewReq;
 import com.lumanlab.parentcaringservice.user.domain.User;
 import com.lumanlab.parentcaringservice.user.domain.UserAgent;
 import com.lumanlab.parentcaringservice.user.domain.UserRole;
