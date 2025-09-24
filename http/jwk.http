@@ -1,0 +1,2 @@
+### JWK 키 목록 조회
+GET {{host}}/.well-known/jwks.json

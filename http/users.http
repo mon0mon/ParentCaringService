@@ -1,0 +1,125 @@
+### 유저 프로필 조회
+GET {{host}}/api/users/profile
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+
+### 유저 로그인
+POST {{host}}/api/users/login
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "email": "{{user.email}}",
+  "password": "{{user.password}}"
+}
+
+> {%
+    if (response.status == 200) {
+        if (response.body && response.body != "") {
+            client.log("accessToken : " + response.body.accessToken);
+            client.log("refreshToken : " + response.body.refreshToken);
+            client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+            client.global.set("accessToken", response.body.accessToken);
+            client.global.set("refreshToken", response.body.refreshToken);
+        }
+    }
+
+    if (response.status == 428) {
+        if (response.body && response.body != "") {
+            client.global.set("mfaNonce", response.body.additionalData.nonce);
+        }
+    }
+%}
+
+### 유저 OAuth2 로그인 (GOOGLE)
+POST {{host}}/api/users/login/oauth2
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "provider": "GOOGLE",
+  "accessToken": ""
+}
+
+> {%
+    if (response.status == 200) {
+        if (response.body && response.body != "") {
+            client.log("accessToken : " + response.body.accessToken);
+            client.log("refreshToken : " + response.body.refreshToken);
+            client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+            client.global.set("accessToken", response.body.accessToken);
+            client.global.set("refreshToken", response.body.refreshToken);
+        }
+    }
+
+    if (response.status == 428) {
+        if (response.body && response.body != "") {
+            client.global.set("mfaNonce", response.body.additionalData.nonce);
+        }
+    }
+%}
+
+### 유저 회원가입
+POST {{host}}/api/users/register
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "email": "{{user.email}}",
+  "password": "{{user.password}}"
+}
+
+### 유저 TOTP 정보 수정
+POST {{host}}/api/users/totp
+Content-Type: application/json
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+
+### 유저 TOTP 정보 삭제
+DELETE {{host}}/api/users/totp
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+
+### 유저 TOTP 인증
+POST {{host}}/api/users/totp/verify
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "nonce": "{{mfaNonce}}",
+  "verificationCode": ""
+}
+
+> {%
+    if (response.status == 200) {
+        if (response.body && response.body != "") {
+            client.log("accessToken : " + response.body.accessToken);
+            client.log("refreshToken : " + response.body.refreshToken);
+            client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+            client.global.set("accessToken", response.body.accessToken);
+            client.global.set("refreshToken", response.body.refreshToken);
+        }
+    }
+
+    if (response.status == 428) {
+        if (response.body && response.body != "") {
+            client.global.set("mfaNonce", response.body.additionalData.nonce);
+        }
+    }
+%}
+
+### 유저 OAuth2 연동 (GOOGLE)
+POST {{host}}/api/users/oauth2-link/GOOGLE
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+Content-Type: application/json
+
+{
+  "oAuth2AccessToken": ""
+}
+
+### 유저 OAuth2 연동 취소 (GOOGLE)
+DELETE {{host}}/api/users/oauth2-link/GOOGLE
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+

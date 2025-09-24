@@ -1,0 +1,7 @@
+### RefreshToken으로 AccessToken 갱신
+POST {{host}}/api/token/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

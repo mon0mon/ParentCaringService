@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>OAuth2 로그인 결과</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .info-value {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+
+                    <div id="success-view" style="display: none;">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                            <h2 class="mt-3">로그인 성공</h2>
+                            <p class="text-muted">인증이 성공적으로 완료되었습니다.</p>
+                        </div>
+                        <hr class="my-4">
+                        <dl class="row">
+                            <dt class="col-sm-4">OAuth2 Provider</dt>
+                            <dd class="col-sm-8"><span class="badge bg-primary fs-6" id="provider"></span></dd>
+
+                            <dt class="col-sm-4 mt-3">OAuth2 User ID</dt>
+                            <dd class="col-sm-8 mt-3 d-flex align-items-center">
+                                <code class="info-value flex-grow-1" id="oauth2Id"></code>
+                                <button class="btn btn-sm btn-outline-secondary ms-2"
+                                        onclick="copyToClipboard('oauth2Id', this)"
+                                        title="Copy User ID" type="button">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </dd>
+
+                            <dt class="col-sm-4 mt-3">Access Token</dt>
+                            <dd class="col-sm-8 mt-3 d-flex align-items-center">
+                                <code class="info-value flex-grow-1" id="accessToken"></code>
+                                <button class="btn btn-sm btn-outline-secondary ms-2"
+                                        onclick="copyToClipboard('accessToken', this)"
+                                        title="Copy Access Token" type="button">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div id="failure-view" style="display: none;">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                            <h2 class="mt-3">로그인 실패</h2>
+                            <p class="text-muted">인증 처리 중 오류가 발생했습니다.</p>
+                        </div>
+                        <div class="alert alert-danger">
+                            오류 정보를 확인해주세요. <br>
+                            <code class="info-value" id="error-message"></code>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 페이지 로드 시 URL 파라미터를 확인하여 동적으로 UI를 변경합니다.
+    window.onload = function () {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status');
+
+        const successView = document.getElementById('success-view');
+        const failureView = document.getElementById('failure-view');
+
+        if (status === 'success') {
+            successView.style.display = 'block';
+            failureView.style.display = 'none';
+
+            const provider = params.get('provider');
+            const oauth2Id = params.get('oAuth2Id');
+            const accessToken = params.get('accessToken');
+
+            document.getElementById('provider').textContent = provider || 'N/A';
+            document.getElementById('oauth2Id').textContent = oauth2Id || 'N/A';
+            document.getElementById('accessToken').textContent = accessToken || 'N/A';
+
+        } else {
+            successView.style.display = 'none';
+            failureView.style.display = 'block';
+
+            const errorMessage = params.get('error') || '알 수 없는 오류가 발생했습니다.';
+            document.getElementById('error-message').textContent = errorMessage;
+        }
+    };
+
+    /**
+     * 지정된 ID를 가진 요소의 텍스트를 클립보드에 복사하는 함수
+     * @param {string} elementId - 텍스트를 가져올 요소의 ID
+     * @param {HTMLButtonElement} buttonElement - 클릭된 버튼 요소
+     */
+    function copyToClipboard(elementId, buttonElement) {
+        const textToCopy = document.getElementById(elementId).textContent;
+        if (!textToCopy) return;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // 복사 성공 시 피드백
+            const originalIconHTML = buttonElement.innerHTML;
+            buttonElement.innerHTML = `<i class="bi bi-check-lg text-success"></i>`;
+            buttonElement.disabled = true;
+
+            // 2초 후 원래 아이콘으로 복원
+            setTimeout(() => {
+                buttonElement.innerHTML = originalIconHTML;
+                buttonElement.disabled = false;
+            }, 2000);
+        }).catch(err => {
+            console.error('클립보드 복사 실패:', err);
+            alert('클립보드 복사에 실패했습니다.');
+        });
+    }
+</script>
+
+</body>
+</html>

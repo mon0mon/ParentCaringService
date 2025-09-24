@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:15432/parentcaringservice-test
+    username: user
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 16379
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+      show-sql: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+            scope: profile, email # 사용자 정보 범위
+
+jwt:
+  access-token:
+    expiration-time: 900  # 15분 (초)
+  refresh-token:
+    expiration-time: 1209600  # 14일 (초)
+  key:
+    rotation-interval: 86400  # 24시간마다 키 로테이션 (초)
+    max-keys: 5  # 최대 보관할 키 개수
+  issuer: parent-caring-service
+
+oauth2:
+  google:
+    profile:
+      url: https://www.googleapis.com
+      path: /oauth2/v1/userinfo
+
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

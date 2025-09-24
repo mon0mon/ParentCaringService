@@ -1,0 +1,22 @@
+### Admin 임퍼소네이션 요청
+POST {{host}}/api/admin/impersonate/1
+Authorization: {{jwtToken}}
+User-Agent: {{userAgent}}
+
+> {%
+    if (response.status == 200) {
+        if (response.body && response.body != "") {
+            client.log("accessToken : " + response.body.accessToken);
+            client.log("refreshToken : " + response.body.refreshToken);
+            client.global.set("jwtToken", "Bearer " + response.body.accessToken)
+            client.global.set("accessToken", response.body.accessToken);
+            client.global.set("refreshToken", response.body.refreshToken);
+        }
+    }
+
+    if (response.status == 428) {
+        if (response.body && response.body != "") {
+            client.global.set("mfaNonce", response.body.additionalData.nonce);
+        }
+    }
+%}
