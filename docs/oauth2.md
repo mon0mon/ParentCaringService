@@ -28,12 +28,10 @@ sequenceDiagram
 ## 도메인
 
 ### OAuth2Link
-
 - OAuth2 연동 정보를 저장하는 엔티티
 - User-OAuth2Link는 1:N 관계
 
 ## 테스트
-
 1. `GET /oauth2.html` 접속
 2. `Sign in with Google` 버튼 클릭
 3. `Access Token`을 복사 후, 요청 시 사용
