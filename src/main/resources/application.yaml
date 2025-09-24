@@ -33,7 +33,7 @@ jwt:
   access-token:
     expiration-time: 900  # 15분 (초)
   refresh-token:
-    expiration-time: 1209600  # 14일 (초)
+    expiration-time: 86400  # 1일 (초)
   key:
     rotation-interval: 86400  # 24시간마다 키 로테이션 (초)
     max-keys: 5  # 최대 보관할 키 개수
