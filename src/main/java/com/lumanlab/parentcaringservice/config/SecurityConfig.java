@@ -54,7 +54,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Swagger 관련
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html")
+                        .requestMatchers("/swagger/**")
                         .permitAll()
                         // 정적 리소스
                         .requestMatchers("/static/**", "/css/**", "/js/**", "/img/**", "/oauth2.html",
