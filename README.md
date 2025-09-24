@@ -173,27 +173,26 @@ sequenceDiagram
 - 임퍼소네이션으로 인증 정보 발급 시 claims에 `impersonatorId`로 저장하여 발급
 - `JwtAuthenticationFilter`에서 `impersonatorId` 확인 시, 로그 저장
 
-#### 코드
-
-```java
-// 어드민 임퍼소네이션인 경우, 저장
-if(principal.isImpersonation()){
-String ip = request.getRemoteAddr();
-String actionDetails = actionDetailsExtractor.extractActionDetails(request);
-
-    updateImpersonationLog.
-
-register(
-        principal.impersonatorId(),principal.
-
-id(),ip,ImpersonationType.ACTION,actionDetails
-    );
-            }
-```
-
 ### 세션 목록 및 원격 로그아웃
 
 #### 설명
 
 - RDB에 등록된 RefreshToken 목록을, 세션 형식으로 표출
 - `DELETE /me/sessions/{sessionId}` 요청 시, 등록된 세션을 만료 처리
+
+## 추가 설명
+
+### 테스트 코드 전략
+
+- 헥사고날 아키텍쳐를 사용하여, 비교적 테스트 코드 작성이 용이하도록 구성
+- 모든 테스트를 작성하기 보단, 비즈니스적으로 테스트가 필요한 로직을 우선하여 테스트 코드 작성
+
+### RestDocs와 OpenApi를 통한 Swagger 문서 생성
+
+- 빌드 시, 테스트를 반드시 수행하도록 하여 API 문서 생성 강제
+- 생성된 API 문서는 Swagger 형식으로, 추후 API 호출도 가능하도록 설정
+- 빌드 후, `GET /swagger/index.html`로 접근 가능하며, 필요 시 시큐리티 설정으로 인증 처리가 가능해야 접속 가능하도록 설정 가능
+
+### RestClient 로깅 설정
+
+- Actuator와 같은 외부 라이브러리로, 런타임 중 로깅 레벨을 변경하여 로그를 볼 수 있도록 설정
