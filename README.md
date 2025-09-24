@@ -23,6 +23,25 @@
     - `docker compose up -d`
     - `gradle test`
 
+### OAuth2
+
+#### 주의 사항
+
+이메일로 첨부된, 샘플 키를 `application.yaml`에 추가 해야 사용 가능
+
+#### Google OAuth2 로그인 테스트
+
+1. `GET /oauth2.html` 접속
+2. `Sign in with Google` 버튼 클릭
+3. `Access Token`을 복사 후, 요청 시 사용
+
+### API 호출 테스트
+
+1. 요청하려는 API 선택
+2. 현재 환경 설정
+   ![http_client_environment_setting.png](docs/img/http_client_environment_setting.png)
+3. API 요청 클릭
+
 ## API 문서
 
 - `gradle copyApiDocs` 실행, `build/assets/index.html` 열기
