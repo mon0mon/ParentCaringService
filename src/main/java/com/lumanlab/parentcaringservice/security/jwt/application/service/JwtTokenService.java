@@ -89,6 +89,14 @@ public class JwtTokenService {
 
         } catch (ExpiredJwtException e) {
             log.debug("만료된 JWT 토큰: {}", e.getMessage());
+
+            // Grace 기간 내에 존재하는 JWT 토큰인지 확인
+            String jwkKeyId = extractJwkKeyIdFromJwt(jwtToken);
+            if (jwkKeyId != null && jwkManager.isKeyInGracePeriod(jwkKeyId)) {
+                log.warn("Grace 기간 내에 존재하는 토큰: {}", jwkKeyId);
+                return e.getClaims();
+            }
+
             throw new JwtException("만료된 JWT 토큰입니다", e);
         } catch (UnsupportedJwtException e) {
             log.debug("지원하지 않는 JWT 토큰: {}", e.getMessage());
